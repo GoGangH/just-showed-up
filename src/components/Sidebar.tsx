@@ -1,4 +1,5 @@
 import { Home, Plus, Settings, UsersRound } from "lucide-react";
+import Link from "next/link";
 
 export function Sidebar() {
   return (
@@ -8,18 +9,18 @@ export function Sidebar() {
         <p className="mt-1 text-sm text-neutral-500">주간 스터디 운영 공간</p>
       </div>
       <nav className="mt-8 space-y-2">
-        <a className="flex items-center gap-3 rounded-md bg-neutral-900 px-3 py-2 text-sm font-semibold text-white" href="#">
+        <Link className="flex items-center gap-3 rounded-md bg-neutral-900 px-3 py-2 text-sm font-semibold text-white" href="/">
           <Home size={17} /> 홈
-        </a>
-        <a className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="#">
+        </Link>
+        <Link className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="/">
           <UsersRound size={17} /> 쉬었음청년 스터디
-        </a>
-        <a className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="#">
+        </Link>
+        <Link className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="/login">
           <Plus size={17} /> 그룹 만들기
-        </a>
-        <a className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="#">
+        </Link>
+        <Link className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="/login">
           <Settings size={17} /> 설정
-        </a>
+        </Link>
       </nav>
     </aside>
   );

@@ -3,6 +3,7 @@ import { MeetingCard } from "@/components/MeetingCard";
 import { PostComposer } from "@/components/PostComposer";
 import { Sidebar } from "@/components/Sidebar";
 import { Bell, CalendarDays, CheckCircle2, MessageCircle } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -32,9 +33,12 @@ export default function Home() {
                     주간 모임 전에 기록과 자료를 공유하고, 모임 후에는 익명으로 피드백을 남깁니다.
                   </p>
                 </div>
-                <button className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white">
+                <Link
+                  className="rounded-md bg-neutral-900 px-4 py-2 text-center text-sm font-semibold text-white"
+                  href="/login"
+                >
                   새 공유글 작성
-                </button>
+                </Link>
               </div>
             </section>
 
