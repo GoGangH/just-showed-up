@@ -27,6 +27,11 @@ function formatTime(hour: number, minute: number) {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
+function formatHourLabel(hour: number, minute: number) {
+  if (minute !== 0) return "";
+  return `${hour}시`;
+}
+
 function buildDays() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -58,7 +63,7 @@ function buildDemoCounts(days: Date[]) {
 }
 
 function getAvailabilityClass(count: number, isSelected: boolean) {
-  const ownSelectionClass = isSelected ? " ring-1 ring-inset ring-teal-900/40" : "";
+  const ownSelectionClass = isSelected ? " outline outline-1 outline-teal-900/45 outline-offset-[-1px]" : "";
 
   if (count >= 4) return `bg-teal-700 hover:bg-teal-800${ownSelectionClass}`;
   if (count === 3) return `bg-teal-500 hover:bg-teal-600${ownSelectionClass}`;
@@ -134,7 +139,7 @@ export function RescheduleForm({ groupId }: { groupId: string }) {
         </div>
 
         <div className="mt-3 max-h-[430px] overflow-auto rounded-md border border-neutral-200">
-          <div className="grid min-w-[420px] select-none grid-cols-[58px_repeat(5,minmax(58px,1fr))]">
+          <div className="grid min-w-[420px] select-none grid-cols-[44px_repeat(5,minmax(58px,1fr))]">
             <div className="border-b border-r border-neutral-200 bg-neutral-50 p-2 text-xs font-semibold text-neutral-500">
               시간
             </div>
@@ -152,8 +157,8 @@ export function RescheduleForm({ groupId }: { groupId: string }) {
 
             {timeSlots.map(({ hour, minute }) => (
               <div className="contents" key={`${hour}:${minute}`}>
-                <div className="border-b border-r border-neutral-200 bg-neutral-50 px-2 py-1 text-xs font-semibold text-neutral-500">
-                  {formatTime(hour, minute)}
+                <div className="border-r border-neutral-200 bg-neutral-50 px-2 text-xs font-semibold leading-4 text-neutral-500">
+                  {formatHourLabel(hour, minute)}
                 </div>
                 {days.map((day) => {
                   const slot = new Date(day);
@@ -168,7 +173,9 @@ export function RescheduleForm({ groupId }: { groupId: string }) {
                     <button
                       aria-pressed={isSelected}
                       aria-label={`${day.getMonth() + 1}/${day.getDate()} ${timeLabel}, ${visibleCount}명 가능`}
-                      className={`h-5 border-b border-r border-neutral-200 transition last:border-r-0 ${getAvailabilityClass(
+                      className={`h-4 border-r border-t border-neutral-100 transition last:border-r-0 ${
+                        minute === 0 ? "border-t-neutral-200" : "border-t-neutral-100"
+                      } ${getAvailabilityClass(
                         visibleCount,
                         isSelected,
                       )}`}
