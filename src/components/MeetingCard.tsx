@@ -1,4 +1,5 @@
 import { CalendarClock, MapPin, RotateCcw, UsersRound } from "lucide-react";
+import type { HomeGroup } from "@/app/home-data";
 
 const slots = [
   { label: "월 20:00", count: 3 },
@@ -7,13 +8,41 @@ const slots = [
   { label: "목 20:00", count: 2 },
 ];
 
-export function MeetingCard() {
+const weekdays = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+
+function formatMeetingTime(group: HomeGroup) {
+  if (group.default_meeting_day === null && !group.default_meeting_time) {
+    return "기본 모임 시간 미정";
+  }
+
+  const day =
+    group.default_meeting_day === null ? "요일 미정" : weekdays[group.default_meeting_day] ?? "요일 미정";
+  const time = group.default_meeting_time?.slice(0, 5) ?? "시간 미정";
+  return `${day} ${time}`;
+}
+
+function formatLocation(group: HomeGroup) {
+  if (group.default_location_type === "unset" && !group.default_location_name) {
+    return "장소 미정";
+  }
+
+  const typeLabel = {
+    online: "온라인",
+    offline: "오프라인",
+    hybrid: "혼합",
+    unset: "장소",
+  }[group.default_location_type];
+
+  return `${typeLabel} · ${group.default_location_name ?? "장소 미정"}`;
+}
+
+export function MeetingCard({ group }: { group: HomeGroup }) {
   return (
     <section className="rounded-lg border border-neutral-200 bg-white p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-neutral-500">이번 주 모임</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-normal">수요일 오후 9:00</h2>
+          <h2 className="mt-2 text-2xl font-semibold tracking-normal">{formatMeetingTime(group)}</h2>
           <div className="mt-3 flex flex-wrap gap-2 text-sm text-neutral-600">
             <span className="inline-flex items-center gap-1 rounded-md border border-neutral-200 px-3 py-1.5">
               <CalendarClock size={15} />
@@ -21,7 +50,7 @@ export function MeetingCard() {
             </span>
             <span className="inline-flex items-center gap-1 rounded-md border border-neutral-200 px-3 py-1.5">
               <MapPin size={15} />
-              온라인 · 모임 링크
+              {formatLocation(group)}
             </span>
           </div>
         </div>

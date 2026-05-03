@@ -130,6 +130,32 @@ as $$
   );
 $$;
 
+create or replace function public.create_profile_for_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, nickname)
+  values (
+    new.id,
+    coalesce(
+      nullif(new.raw_user_meta_data ->> 'nickname', ''),
+      split_part(new.email, '@', 1),
+      '사용자'
+    )
+  )
+  on conflict (id) do nothing;
+
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created_create_profile
+after insert on auth.users
+for each row execute function public.create_profile_for_new_user();
+
 create or replace function public.join_group_by_code(code text)
 returns uuid
 language plpgsql
