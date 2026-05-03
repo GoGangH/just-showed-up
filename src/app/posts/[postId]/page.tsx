@@ -1,0 +1,160 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { hasSupabaseConfig } from "@/lib/supabase/env";
+import { MarkdownViewer } from "@/components/markdown/MarkdownViewer";
+import type { Database } from "@/lib/supabase/database.types";
+import { CommentForm } from "./CommentForm";
+import { getReactionLabel, ReactionBar } from "./ReactionBar";
+
+type PageProps = {
+  params: Promise<{
+    postId: string;
+  }>;
+};
+
+type PostDetail = Database["public"]["Tables"]["weekly_posts"]["Row"] & {
+  author: { nickname: string } | null;
+  post_links: Database["public"]["Tables"]["post_links"]["Row"][];
+  anonymous_comments: Database["public"]["Tables"]["anonymous_comments"]["Row"][];
+  anonymous_reactions: Pick<
+    Database["public"]["Tables"]["anonymous_reactions"]["Row"],
+    "id" | "reaction_type"
+  >[];
+};
+
+function countReactions(post: PostDetail) {
+  return post.anonymous_reactions.reduce<Record<string, number>>((acc, reaction) => {
+    acc[reaction.reaction_type] = (acc[reaction.reaction_type] ?? 0) + 1;
+    return acc;
+  }, {});
+}
+
+export default async function PostDetailPage({ params }: PageProps) {
+  const { postId } = await params;
+
+  if (!hasSupabaseConfig()) {
+    return (
+      <main className="min-h-screen px-4 py-8">
+        <section className="mx-auto max-w-3xl rounded-lg border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+          Supabase 환경변수를 먼저 설정해주세요.
+        </section>
+      </main>
+    );
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("weekly_posts")
+    .select(
+      "*,author:profiles!weekly_posts_author_id_fkey(nickname),post_links(*),anonymous_comments(*),anonymous_reactions(id,reaction_type)",
+    )
+    .eq("id", postId)
+    .single();
+
+  if (error || !data) {
+    notFound();
+  }
+
+  const post = data as PostDetail;
+  const reactionCounts = countReactions(post);
+
+  return (
+    <main className="min-h-screen px-4 py-8">
+      <div className="mx-auto max-w-4xl space-y-5">
+        <Link className="text-sm font-semibold text-neutral-500 hover:text-neutral-900" href="/">
+          홈으로 돌아가기
+        </Link>
+
+        <article className="rounded-lg border border-neutral-200 bg-white p-6">
+          <p className="text-sm font-semibold text-neutral-500">
+            {post.author?.nickname ?? "작성자"} · {post.week_start}
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-normal">{post.title}</h1>
+
+          {post.feedback_question ? (
+            <div className="mt-5 rounded-md border border-neutral-200 bg-neutral-50 p-4 text-sm leading-6">
+              <p className="font-semibold text-neutral-900">피드백 받고 싶은 질문</p>
+              <p className="mt-1 text-neutral-700">{post.feedback_question}</p>
+            </div>
+          ) : null}
+
+          <div className="mt-6">
+            <MarkdownViewer content={post.body_markdown} />
+          </div>
+
+          {post.post_links.length > 0 ? (
+            <section className="mt-6 space-y-2">
+              <h2 className="text-sm font-semibold text-neutral-500">공유 링크</h2>
+              {post.post_links.map((link) => (
+                <a
+                  className="block rounded-md border border-neutral-200 bg-neutral-50 p-4 hover:border-neutral-300"
+                  href={link.url}
+                  key={link.id}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <p className="font-semibold text-neutral-900">{link.title ?? link.url}</p>
+                  {link.description ? (
+                    <p className="mt-1 text-sm leading-6 text-neutral-600">{link.description}</p>
+                  ) : null}
+                  <p className="mt-2 text-xs font-medium text-neutral-500">
+                    {link.site_name ?? new URL(link.url).hostname}
+                  </p>
+                </a>
+              ))}
+            </section>
+          ) : null}
+        </article>
+
+        <section className="rounded-lg border border-neutral-200 bg-white p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-neutral-500">익명 반응</p>
+              <p className="mt-1 text-sm text-neutral-600">
+                반응에는 작성자 정보가 저장되지 않습니다.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-sm text-neutral-600">
+              {Object.entries(reactionCounts).map(([type, count]) => (
+                <span className="rounded-md bg-neutral-100 px-2 py-1" key={type}>
+                  {getReactionLabel(type)} {count}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4">
+            <ReactionBar postId={post.id} />
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-neutral-200 bg-white p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-neutral-500">익명 댓글</p>
+              <h2 className="mt-1 text-xl font-semibold">{post.anonymous_comments.length}개</h2>
+            </div>
+          </div>
+          <div className="mt-5 space-y-3">
+            {post.anonymous_comments.length === 0 ? (
+              <p className="rounded-md bg-neutral-50 p-4 text-sm text-neutral-600">
+                아직 댓글이 없습니다.
+              </p>
+            ) : null}
+            {post.anonymous_comments.map((comment) => (
+              <article className="rounded-md border border-neutral-200 p-4" key={comment.id}>
+                <p className="text-sm leading-6 text-neutral-700">{comment.body}</p>
+                <p className="mt-2 text-xs text-neutral-500">
+                  {new Date(comment.created_at).toLocaleString("ko-KR")}
+                </p>
+              </article>
+            ))}
+          </div>
+          <div className="mt-6">
+            <CommentForm postId={post.id} />
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}

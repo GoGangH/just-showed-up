@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { getCurrentWeekStart } from "@/lib/dates/week";
@@ -13,6 +14,8 @@ export type PostFormState = {
 
 type WeeklyPostInsert = Database["public"]["Tables"]["weekly_posts"]["Insert"];
 type PostLinkInsert = Database["public"]["Tables"]["post_links"]["Insert"];
+type AnonymousCommentInsert = Database["public"]["Tables"]["anonymous_comments"]["Insert"];
+type AnonymousReactionInsert = Database["public"]["Tables"]["anonymous_reactions"]["Insert"];
 
 function collectLinks(formData: FormData) {
   return formData
@@ -96,5 +99,68 @@ export async function createWeeklyPostAction(
     }
   }
 
-  redirect(`/?group=${groupId}`);
+  redirect(`/posts/${post.id}`);
+}
+
+export async function createAnonymousCommentAction(
+  _: PostFormState,
+  formData: FormData,
+): Promise<PostFormState> {
+  if (!hasSupabaseConfig()) {
+    return { error: "Supabase 환경변수를 먼저 설정해주세요." };
+  }
+
+  const postId = String(formData.get("post_id") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+
+  if (!postId) {
+    return { error: "공유글 정보가 필요합니다." };
+  }
+
+  if (body.length < 1) {
+    return { error: "댓글 내용을 입력해주세요." };
+  }
+
+  const supabase = await createClient();
+  const payload: AnonymousCommentInsert = {
+    post_id: postId,
+    body,
+  };
+  const { error } = await supabase.from("anonymous_comments").insert(payload as never);
+
+  if (error) {
+    return { error: "댓글을 저장하지 못했습니다. 그룹 권한과 DB 설정을 확인해주세요." };
+  }
+
+  revalidatePath(`/posts/${postId}`);
+  return {};
+}
+
+export async function createAnonymousReactionAction(formData: FormData) {
+  if (!hasSupabaseConfig()) {
+    return;
+  }
+
+  const postId = String(formData.get("post_id") ?? "").trim();
+  const reactionType = String(formData.get("reaction_type") ?? "").trim();
+  const allowedReactions: AnonymousReactionInsert["reaction_type"][] = [
+    "helpful",
+    "relate",
+    "cheer",
+    "curious",
+    "join",
+  ];
+
+  if (!postId || !allowedReactions.includes(reactionType as AnonymousReactionInsert["reaction_type"])) {
+    return;
+  }
+
+  const supabase = await createClient();
+  const payload: AnonymousReactionInsert = {
+    post_id: postId,
+    reaction_type: reactionType as AnonymousReactionInsert["reaction_type"],
+  };
+
+  await supabase.from("anonymous_reactions").insert(payload as never);
+  revalidatePath(`/posts/${postId}`);
 }

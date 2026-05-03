@@ -1,5 +1,6 @@
 import { MessageCircle, Paperclip, Sparkles } from "lucide-react";
 import type { HomePost } from "@/app/home-data";
+import Link from "next/link";
 
 function getExcerpt(markdown: string) {
   return markdown
@@ -32,13 +33,15 @@ export function FeedPreview({ posts }: { posts: HomePost[] }) {
       ) : null}
 
       {posts.map((post) => (
-        <article className="rounded-lg border border-neutral-200 bg-white p-5" key={post.title}>
+        <article className="rounded-lg border border-neutral-200 bg-white p-5" key={post.id}>
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-neutral-500">
                 {post.author?.nickname ?? "작성자"}
               </p>
-              <h3 className="mt-1 text-lg font-semibold">{post.title}</h3>
+              <Link className="mt-1 block text-lg font-semibold hover:underline" href={`/posts/${post.id}`}>
+                {post.title}
+              </Link>
             </div>
             <span className="rounded-md bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-600">
               이번 주
