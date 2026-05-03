@@ -1,18 +1,30 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { startRescheduleAction, type SessionFormState } from "../actions";
 
 const initialState: SessionFormState = {};
-const hours = Array.from({ length: 15 }, (_, index) => index + 9);
+const timeSlots = Array.from({ length: 30 }, (_, index) => {
+  const totalMinutes = 9 * 60 + index * 30;
+  return {
+    hour: Math.floor(totalMinutes / 60),
+    minute: totalMinutes % 60,
+  };
+});
 const weekdayLabels = ["일", "월", "화", "수", "목", "금", "토"];
+type DragMode = "select" | "clear" | null;
 
 function toLocalInputValue(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   const hour = String(date.getHours()).padStart(2, "0");
-  return `${year}-${month}-${day}T${hour}:00`;
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hour}:${minute}`;
+}
+
+function formatTime(hour: number, minute: number) {
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
 function buildDays() {
@@ -26,31 +38,72 @@ function buildDays() {
   });
 }
 
+function buildDemoCounts(days: Date[]) {
+  const counts = new Map<string, number>();
+
+  days.slice(1, 4).forEach((day, dayIndex) => {
+    [
+      [10, 0, 1 + dayIndex],
+      [10, 30, 2 + dayIndex],
+      [11, 0, 3],
+      [11, 30, 2],
+    ].forEach(([hour, minute, count]) => {
+      const slot = new Date(day);
+      slot.setHours(hour, minute, 0, 0);
+      counts.set(toLocalInputValue(slot), count);
+    });
+  });
+
+  return counts;
+}
+
+function getAvailabilityClass(count: number, isSelected: boolean) {
+  const ownSelectionClass = isSelected ? " ring-1 ring-inset ring-teal-900/40" : "";
+
+  if (count >= 4) return `bg-teal-700 hover:bg-teal-800${ownSelectionClass}`;
+  if (count === 3) return `bg-teal-500 hover:bg-teal-600${ownSelectionClass}`;
+  if (count === 2) return `bg-teal-300 hover:bg-teal-400${ownSelectionClass}`;
+  if (count === 1) return `bg-teal-100 hover:bg-teal-200${ownSelectionClass}`;
+  return "bg-white hover:bg-teal-50";
+}
+
 export function RescheduleForm({ groupId }: { groupId: string }) {
   const [state, formAction, pending] = useActionState(startRescheduleAction, initialState);
   const days = useMemo(buildDays, []);
-  const [selected, setSelected] = useState<Set<string>>(() => {
-    const initial = new Set<string>();
-    days.slice(1, 3).forEach((day) => {
-      [20, 21].forEach((hour) => {
-        const slot = new Date(day);
-        slot.setHours(hour, 0, 0, 0);
-        initial.add(toLocalInputValue(slot));
-      });
-    });
-    return initial;
-  });
+  const existingCounts = useMemo(() => buildDemoCounts(days), [days]);
+  const [dragMode, setDragMode] = useState<DragMode>(null);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
 
-  function toggleSlot(value: string) {
+  useEffect(() => {
+    function stopDragging() {
+      setDragMode(null);
+    }
+
+    window.addEventListener("pointerup", stopDragging);
+    return () => window.removeEventListener("pointerup", stopDragging);
+  }, []);
+
+  function setSlot(value: string, shouldSelect: boolean) {
     setSelected((current) => {
       const next = new Set(current);
-      if (next.has(value)) {
-        next.delete(value);
-      } else {
+      if (shouldSelect) {
         next.add(value);
+      } else {
+        next.delete(value);
       }
       return next;
     });
+  }
+
+  function startDrag(value: string, isSelected: boolean) {
+    const nextMode: DragMode = isSelected ? "clear" : "select";
+    setDragMode(nextMode);
+    setSlot(value, nextMode === "select");
+  }
+
+  function paintDuringDrag(value: string) {
+    if (!dragMode) return;
+    setSlot(value, dragMode === "select");
   }
 
   return (
@@ -74,14 +127,14 @@ export function RescheduleForm({ groupId }: { groupId: string }) {
           <div>
             <p className="text-sm font-medium text-neutral-700">가능한 시간 선택</p>
             <p className="mt-1 text-xs text-neutral-500">
-              가능한 칸을 선택하세요. 선택된 시간이 겹칠수록 나중에 더 진하게 표시됩니다.
+              다른 사람이 선택한 시간은 미리 칠해져 있고, 그 위에 내 가능 시간을 칠하면 한 단계 더 진해집니다.
             </p>
           </div>
           <p className="text-sm font-semibold text-neutral-700">{selected.size}개 선택</p>
         </div>
 
-        <div className="mt-3 overflow-x-auto rounded-md border border-neutral-200">
-          <div className="grid min-w-[420px] grid-cols-[56px_repeat(5,minmax(58px,1fr))]">
+        <div className="mt-3 max-h-[430px] overflow-auto rounded-md border border-neutral-200">
+          <div className="grid min-w-[420px] select-none grid-cols-[58px_repeat(5,minmax(58px,1fr))]">
             <div className="border-b border-r border-neutral-200 bg-neutral-50 p-2 text-xs font-semibold text-neutral-500">
               시간
             </div>
@@ -97,31 +150,37 @@ export function RescheduleForm({ groupId }: { groupId: string }) {
               </div>
             ))}
 
-            {hours.map((hour) => (
-              <div className="contents" key={hour}>
+            {timeSlots.map(({ hour, minute }) => (
+              <div className="contents" key={`${hour}:${minute}`}>
                 <div className="border-b border-r border-neutral-200 bg-neutral-50 px-2 py-1 text-xs font-semibold text-neutral-500">
-                  {String(hour).padStart(2, "0")}
+                  {formatTime(hour, minute)}
                 </div>
                 {days.map((day) => {
                   const slot = new Date(day);
-                  slot.setHours(hour, 0, 0, 0);
+                  slot.setHours(hour, minute, 0, 0);
                   const value = toLocalInputValue(slot);
                   const isSelected = selected.has(value);
+                  const existingCount = existingCounts.get(value) ?? 0;
+                  const visibleCount = existingCount + (isSelected ? 1 : 0);
+                  const timeLabel = formatTime(hour, minute);
 
                   return (
                     <button
                       aria-pressed={isSelected}
-                      aria-label={`${day.getMonth() + 1}/${day.getDate()} ${hour}:00 가능`}
-                      className={`h-7 border-b border-r border-neutral-200 text-xs transition last:border-r-0 ${
-                        isSelected
-                          ? "bg-teal-600 text-transparent hover:bg-teal-700"
-                          : "bg-white text-transparent hover:bg-teal-50"
-                      }`}
+                      aria-label={`${day.getMonth() + 1}/${day.getDate()} ${timeLabel}, ${visibleCount}명 가능`}
+                      className={`h-5 border-b border-r border-neutral-200 transition last:border-r-0 ${getAvailabilityClass(
+                        visibleCount,
+                        isSelected,
+                      )}`}
                       key={value}
-                      onClick={() => toggleSlot(value)}
+                      onPointerDown={(event) => {
+                        event.preventDefault();
+                        startDrag(value, isSelected);
+                      }}
+                      onPointerEnter={() => paintDuringDrag(value)}
                       type="button"
                     >
-                      선택
+                      <span className="sr-only">선택</span>
                     </button>
                   );
                 })}
@@ -129,15 +188,27 @@ export function RescheduleForm({ groupId }: { groupId: string }) {
             ))}
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-between gap-3 text-xs text-neutral-500">
-          <span>겹침 적음</span>
-          <div className="flex flex-1 items-center justify-center gap-1">
-            <span className="h-3 w-10 rounded-sm bg-teal-100" />
-            <span className="h-3 w-10 rounded-sm bg-teal-300" />
-            <span className="h-3 w-10 rounded-sm bg-teal-500" />
-            <span className="h-3 w-10 rounded-sm bg-teal-700" />
+
+        <div className="mt-3 rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">
+          <p className="font-semibold text-neutral-700">색상 기준</p>
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <span className="inline-flex items-center gap-2">
+              <span className="h-3 w-6 rounded-sm bg-teal-100" /> 1명 가능
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <span className="h-3 w-6 rounded-sm bg-teal-300" /> 2명 가능
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <span className="h-3 w-6 rounded-sm bg-teal-500" /> 3명 가능
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <span className="h-3 w-6 rounded-sm bg-teal-700" /> 4명 이상
+            </span>
           </div>
-          <span>겹침 많음</span>
+          <p className="mt-2">
+            테두리가 생긴 칸은 내가 이번에 선택한 시간입니다. 실제 DB 응답이 연결되면 이 색은 그룹원
+            응답 수로 계산됩니다.
+          </p>
         </div>
       </div>
 

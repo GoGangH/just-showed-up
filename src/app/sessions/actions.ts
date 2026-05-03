@@ -18,7 +18,7 @@ function parseLocalSlot(value: string) {
   if (Number.isNaN(date.getTime())) return null;
 
   const endsAt = new Date(date);
-  endsAt.setHours(endsAt.getHours() + 1);
+  endsAt.setMinutes(endsAt.getMinutes() + 30);
 
   return {
     starts_at: date.toISOString(),
