@@ -1,4 +1,4 @@
-import { Home, Plus, Settings, UsersRound } from "lucide-react";
+import { Home, LogIn, Plus, UsersRound } from "lucide-react";
 import Link from "next/link";
 
 export function Sidebar() {
@@ -15,11 +15,11 @@ export function Sidebar() {
         <Link className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="/">
           <UsersRound size={17} /> 쉬었음청년 스터디
         </Link>
-        <Link className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="/login">
+        <Link className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="/groups/new">
           <Plus size={17} /> 그룹 만들기
         </Link>
-        <Link className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="/login">
-          <Settings size={17} /> 설정
+        <Link className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="/groups/join">
+          <LogIn size={17} /> 초대 코드 참여
         </Link>
       </nav>
     </aside>

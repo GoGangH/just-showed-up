@@ -35,9 +35,9 @@ export default function Home() {
                 </div>
                 <Link
                   className="rounded-md bg-neutral-900 px-4 py-2 text-center text-sm font-semibold text-white"
-                  href="/login"
+                  href="/groups/new"
                 >
-                  새 공유글 작성
+                  그룹 만들기
                 </Link>
               </div>
             </section>
