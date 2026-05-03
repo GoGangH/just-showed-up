@@ -6,7 +6,7 @@ import { PostComposer } from "@/components/PostComposer";
 import { GroupJoinForm } from "@/app/groups/join/GroupJoinForm";
 import { GroupCreateForm } from "@/app/groups/new/GroupCreateForm";
 import { LoginForm } from "@/app/login/LoginForm";
-import { getRescheduleData } from "@/app/sessions/reschedule/data";
+import { getRescheduleOverview } from "@/app/sessions/reschedule/data";
 import { RescheduleForm } from "@/app/sessions/reschedule/RescheduleForm";
 import { CalendarDays, CheckCircle2, LogIn, MessageCircle, Plus, UserRound } from "lucide-react";
 import Link from "next/link";
@@ -24,10 +24,10 @@ export default async function Home({ searchParams }: HomeProps) {
   const homeData = await getHomeData();
   const activeGroup = homeData.groups.find((item) => item.id === group) ?? homeData.groups[0] ?? null;
   const isSignedIn = Boolean(homeData.user);
-  const rescheduleAvailability =
-    modal === "reschedule" && homeData.user && activeGroup
-      ? await getRescheduleData(activeGroup.id)
-      : [];
+  const rescheduleOverview =
+    homeData.user && activeGroup
+      ? await getRescheduleOverview(activeGroup.id)
+      : { availability: [], responderCount: 0 };
 
   return (
     <main className="min-h-screen">
@@ -141,7 +141,11 @@ export default async function Home({ searchParams }: HomeProps) {
 
             {activeGroup ? (
               <>
-                <MeetingCard group={activeGroup} />
+                <MeetingCard
+                  availability={rescheduleOverview.availability}
+                  group={activeGroup}
+                  responderCount={rescheduleOverview.responderCount}
+                />
                 <PostComposer groupId={activeGroup.id} />
                 <FeedPreview posts={homeData.posts} />
               </>
@@ -164,7 +168,7 @@ export default async function Home({ searchParams }: HomeProps) {
                     <CalendarDays size={16} />
                     일정 응답
                   </span>
-                  <strong>{activeGroup ? "0" : "-"}</strong>
+                  <strong>{activeGroup ? rescheduleOverview.responderCount : "-"}</strong>
                 </div>
                 <div className="flex items-center justify-between rounded-md bg-neutral-50 p-3">
                   <span className="inline-flex items-center gap-2 text-sm font-semibold">
@@ -251,7 +255,7 @@ export default async function Home({ searchParams }: HomeProps) {
         >
           {homeData.user && activeGroup ? (
             <RescheduleForm
-              availability={rescheduleAvailability}
+              availability={rescheduleOverview.availability}
               defaultMeetingDay={activeGroup.default_meeting_day}
               groupId={activeGroup.id}
             />

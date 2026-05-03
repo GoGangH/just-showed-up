@@ -8,15 +8,20 @@ export type AvailabilitySummary = {
   selectedByMe: boolean;
 };
 
-export async function getRescheduleData(groupId: string): Promise<AvailabilitySummary[]> {
-  if (!hasSupabaseConfig()) return [];
+export type RescheduleOverview = {
+  availability: AvailabilitySummary[];
+  responderCount: number;
+};
+
+export async function getRescheduleOverview(groupId: string): Promise<RescheduleOverview> {
+  if (!hasSupabaseConfig()) return { availability: [], responderCount: 0 };
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return [];
+  if (!user) return { availability: [], responderCount: 0 };
 
   const { data: sessionData } = await supabase
     .from("study_sessions")
@@ -26,7 +31,7 @@ export async function getRescheduleData(groupId: string): Promise<AvailabilitySu
     .maybeSingle();
 
   const session = sessionData as { id: string } | null;
-  if (!session) return [];
+  if (!session) return { availability: [], responderCount: 0 };
 
   const { data: slotRows } = await supabase
     .from("session_time_slots")
@@ -35,7 +40,7 @@ export async function getRescheduleData(groupId: string): Promise<AvailabilitySu
     .order("starts_at", { ascending: true });
 
   const slots = (slotRows ?? []) as { id: string; starts_at: string }[];
-  if (slots.length === 0) return [];
+  if (slots.length === 0) return { availability: [], responderCount: 0 };
 
   const slotIds = slots.map((slot) => slot.id);
   const { data: availabilityRows } = await supabase
@@ -46,17 +51,27 @@ export async function getRescheduleData(groupId: string): Promise<AvailabilitySu
 
   const counts = new Map<string, number>();
   const mySlots = new Set<string>();
+  const responders = new Set<string>();
 
   ((availabilityRows ?? []) as { slot_id: string; user_id: string }[]).forEach((availability) => {
     counts.set(availability.slot_id, (counts.get(availability.slot_id) ?? 0) + 1);
+    responders.add(availability.user_id);
     if (availability.user_id === user.id) {
       mySlots.add(availability.slot_id);
     }
   });
 
-  return slots.map((slot) => ({
-    startsAt: slot.starts_at,
-    count: counts.get(slot.id) ?? 0,
-    selectedByMe: mySlots.has(slot.id),
-  }));
+  return {
+    availability: slots.map((slot) => ({
+      startsAt: slot.starts_at,
+      count: counts.get(slot.id) ?? 0,
+      selectedByMe: mySlots.has(slot.id),
+    })),
+    responderCount: responders.size,
+  };
+}
+
+export async function getRescheduleData(groupId: string): Promise<AvailabilitySummary[]> {
+  const overview = await getRescheduleOverview(groupId);
+  return overview.availability;
 }
