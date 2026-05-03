@@ -3,6 +3,8 @@ import Link from "next/link";
 
 type SidebarUser = {
   email: string | null;
+  name: string | null;
+  avatarUrl: string | null;
 } | null;
 
 export function Sidebar({ user }: { user: SidebarUser }) {
@@ -31,11 +33,20 @@ export function Sidebar({ user }: { user: SidebarUser }) {
         {user ? (
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center rounded-full bg-neutral-900 text-white">
-                <UserRound size={17} />
-              </div>
+              {user.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  alt=""
+                  className="size-9 rounded-full object-cover"
+                  src={user.avatarUrl}
+                />
+              ) : (
+                <div className="flex size-9 items-center justify-center rounded-full bg-neutral-900 text-white">
+                  <UserRound size={17} />
+                </div>
+              )}
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">로그인됨</p>
+                <p className="truncate text-sm font-semibold">{user.name ?? "로그인됨"}</p>
                 <p className="truncate text-xs text-neutral-500">{user.email ?? "이메일 없음"}</p>
               </div>
             </div>

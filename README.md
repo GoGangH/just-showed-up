@@ -40,4 +40,7 @@ Supabase 프로젝트를 만든 뒤 `.env.local`에 값을 채우고 `supabase/m
 http://127.0.0.1:3000/auth/callback
 ```
 
-3. 이메일 회원가입을 사용할 경우 Authentication > Providers > Email 설정을 확인합니다.
+3. Authentication > Providers에서 사용할 OAuth provider를 활성화합니다.
+
+초기 UI는 Kakao, Google, GitHub 로그인을 제공합니다. 각 provider의 callback URL은 Supabase
+대시보드 안내에 맞춰 설정해야 합니다.

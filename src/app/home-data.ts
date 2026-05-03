@@ -40,7 +40,7 @@ export type HomeData =
     }
   | {
       configured: true;
-      user: { id: string; email: string | null };
+      user: { id: string; email: string | null; name: string | null; avatarUrl: string | null };
       groups: HomeGroup[];
       posts: HomePost[];
       error: string | null;
@@ -111,6 +111,10 @@ export async function getHomeData(): Promise<HomeData> {
     user: {
       id: user.id,
       email: user.email ?? null,
+      name:
+        String(user.user_metadata.name ?? user.user_metadata.full_name ?? user.user_metadata.nickname ?? "")
+          .trim() || null,
+      avatarUrl: String(user.user_metadata.avatar_url ?? user.user_metadata.picture ?? "").trim() || null,
     },
     groups,
     posts,

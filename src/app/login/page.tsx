@@ -13,7 +13,7 @@ export default function LoginPage() {
         </Link>
         <h1 className="mt-3 text-2xl font-semibold">쉬었음청년 스터디 시작하기</h1>
         <p className="mt-2 text-sm leading-6 text-neutral-600">
-          그룹의 주간 기록과 모임 일정을 관리하려면 계정이 필요합니다.
+          OAuth 계정으로 로그인하고 그룹의 주간 기록과 모임 일정을 관리합니다.
         </p>
 
         {!configured ? (
