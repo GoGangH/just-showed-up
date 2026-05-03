@@ -65,10 +65,37 @@ function formatLocation(group: HomeGroup) {
 export function GroupList({
   groups,
   activeGroupId,
+  isSignedIn,
 }: {
   groups: HomeGroup[];
   activeGroupId: string | null;
+  isSignedIn: boolean;
 }) {
+  if (!isSignedIn) {
+    return (
+      <section className="rounded-lg border border-neutral-200 bg-white p-5">
+        <h2 className="text-xl font-semibold">스터디 그룹을 시작하세요</h2>
+        <p className="mt-2 text-sm leading-6 text-neutral-600">
+          로그인 후 새 그룹을 만들거나 초대 코드로 기존 그룹에 참여할 수 있습니다.
+        </p>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <Link
+            className="rounded-md bg-neutral-900 px-4 py-2 text-center text-sm font-semibold text-white"
+            href="/?modal=login"
+          >
+            그룹 만들기
+          </Link>
+          <Link
+            className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-center text-sm font-semibold text-neutral-700"
+            href="/?modal=login"
+          >
+            초대 코드 참여
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
   if (groups.length === 0) {
     return null;
   }

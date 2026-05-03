@@ -3,11 +3,10 @@ import { FeedPreview } from "@/components/FeedPreview";
 import { GroupList } from "@/components/GroupList";
 import { MeetingCard } from "@/components/MeetingCard";
 import { PostComposer } from "@/components/PostComposer";
-import { Sidebar } from "@/components/Sidebar";
 import { GroupJoinForm } from "@/app/groups/join/GroupJoinForm";
 import { GroupCreateForm } from "@/app/groups/new/GroupCreateForm";
 import { LoginForm } from "@/app/login/LoginForm";
-import { CalendarDays, CheckCircle2, LogIn, MessageCircle, UserRound } from "lucide-react";
+import { CalendarDays, CheckCircle2, LogIn, MessageCircle, Plus, UserRound } from "lucide-react";
 import Link from "next/link";
 import { getHomeData } from "./home-data";
 
@@ -22,30 +21,56 @@ export default async function Home({ searchParams }: HomeProps) {
   const { group, modal } = await searchParams;
   const homeData = await getHomeData();
   const activeGroup = homeData.groups.find((item) => item.id === group) ?? homeData.groups[0] ?? null;
+  const isSignedIn = Boolean(homeData.user);
 
   return (
-    <main className="flex min-h-screen">
-      <Sidebar user={homeData.user} />
-      <div className="w-full">
-        <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
-          <div className="flex items-center justify-between">
+    <main className="min-h-screen">
+      <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+          <Link href="/">
             <div>
               <p className="text-xl font-bold">일단옴</p>
               <p className="text-xs text-neutral-600">쉬었음청년 스터디</p>
             </div>
+          </Link>
+          <div className="flex items-center gap-2">
             {homeData.user ? (
-              <Link className="rounded-md border border-neutral-200 bg-white p-2" href="/logout">
-                <UserRound size={18} />
-              </Link>
+              <>
+                <Link
+                  className="hidden rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900 sm:inline-flex"
+                  href="/?modal=new-group"
+                >
+                  그룹 만들기
+                </Link>
+                <Link
+                  className="hidden rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900 sm:inline-flex"
+                  href="/?modal=join-group"
+                >
+                  초대 참여
+                </Link>
+                <Link className="rounded-md border border-neutral-200 bg-white p-2" href="/logout">
+                  <UserRound size={18} />
+                </Link>
+              </>
             ) : (
-              <Link className="rounded-md border border-neutral-200 bg-white p-2" href="/?modal=login">
-                <LogIn size={18} />
-              </Link>
+              <>
+                <Link
+                  className="hidden items-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900 sm:inline-flex"
+                  href="/?modal=login"
+                >
+                  <Plus size={16} />
+                  그룹 만들기
+                </Link>
+                <Link className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-semibold text-white" href="/?modal=login">
+                  로그인
+                </Link>
+              </>
             )}
           </div>
-        </header>
+        </div>
+      </header>
 
-        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
           <div className="space-y-6">
             <section className="rounded-lg border border-neutral-200 bg-white p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -79,15 +104,6 @@ export default async function Home({ searchParams }: HomeProps) {
               </section>
             ) : null}
 
-            {homeData.configured && !homeData.user ? (
-              <section className="rounded-lg border border-neutral-200 bg-white p-5">
-                <h2 className="text-xl font-semibold">로그인이 필요합니다</h2>
-                <p className="mt-2 text-sm leading-6 text-neutral-600">
-                  내비게이션의 로그인 버튼으로 계정에 접속한 뒤 그룹을 만들거나 초대 코드로 참여할 수 있습니다.
-                </p>
-              </section>
-            ) : null}
-
             {homeData.user && !activeGroup ? (
               <section className="rounded-lg border border-neutral-200 bg-white p-5">
                 <h2 className="text-xl font-semibold">아직 참여한 그룹이 없습니다</h2>
@@ -111,9 +127,11 @@ export default async function Home({ searchParams }: HomeProps) {
               </section>
             ) : null}
 
-            {homeData.user ? (
-              <GroupList groups={homeData.groups} activeGroupId={activeGroup?.id ?? null} />
-            ) : null}
+            <GroupList
+              activeGroupId={activeGroup?.id ?? null}
+              groups={homeData.groups}
+              isSignedIn={isSignedIn}
+            />
 
             {activeGroup ? (
               <>
@@ -169,7 +187,6 @@ export default async function Home({ searchParams }: HomeProps) {
               </p>
             </section>
           </aside>
-        </div>
       </div>
 
       {modal === "login" ? (
@@ -183,32 +200,34 @@ export default async function Home({ searchParams }: HomeProps) {
 
       {modal === "new-group" ? (
         <AppModal
-          description="기본 모임 시간과 장소를 설정해두면 매주 같은 기준으로 스터디를 운영할 수 있습니다."
-          title="그룹 만들기"
+          description={
+            homeData.user
+              ? "기본 모임 시간과 장소를 설정해두면 매주 같은 기준으로 스터디를 운영할 수 있습니다."
+              : "그룹을 만들려면 먼저 OAuth 계정으로 로그인해주세요."
+          }
+          title={homeData.user ? "그룹 만들기" : "로그인"}
         >
           {homeData.user ? (
             <GroupCreateForm />
           ) : (
-            <div className="space-y-4">
-              <p className="text-sm leading-6 text-neutral-600">그룹을 만들려면 먼저 로그인해주세요.</p>
-              <LoginForm />
-            </div>
+            <LoginForm />
           )}
         </AppModal>
       ) : null}
 
       {modal === "join-group" ? (
         <AppModal
-          description="그룹 관리자에게 받은 초대 코드를 입력하면 스터디 그룹에 참여할 수 있습니다."
-          title="초대 코드로 참여"
+          description={
+            homeData.user
+              ? "그룹 관리자에게 받은 초대 코드를 입력하면 스터디 그룹에 참여할 수 있습니다."
+              : "초대 코드로 참여하려면 먼저 OAuth 계정으로 로그인해주세요."
+          }
+          title={homeData.user ? "초대 코드로 참여" : "로그인"}
         >
           {homeData.user ? (
             <GroupJoinForm />
           ) : (
-            <div className="space-y-4">
-              <p className="text-sm leading-6 text-neutral-600">그룹에 참여하려면 먼저 로그인해주세요.</p>
-              <LoginForm />
-            </div>
+            <LoginForm />
           )}
         </AppModal>
       ) : null}
