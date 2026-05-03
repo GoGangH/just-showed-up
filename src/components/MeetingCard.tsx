@@ -61,7 +61,7 @@ export function MeetingCard({ group }: { group: HomeGroup }) {
           </button>
           <Link
             className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-center text-sm font-semibold text-neutral-700"
-            href={`/sessions/reschedule?group=${group.id}`}
+            href={`/?group=${group.id}&modal=reschedule`}
           >
             이번 주 어려워요
           </Link>

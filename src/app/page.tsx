@@ -6,6 +6,7 @@ import { PostComposer } from "@/components/PostComposer";
 import { GroupJoinForm } from "@/app/groups/join/GroupJoinForm";
 import { GroupCreateForm } from "@/app/groups/new/GroupCreateForm";
 import { LoginForm } from "@/app/login/LoginForm";
+import { RescheduleForm } from "@/app/sessions/reschedule/RescheduleForm";
 import { CalendarDays, CheckCircle2, LogIn, MessageCircle, Plus, UserRound } from "lucide-react";
 import Link from "next/link";
 import { getHomeData } from "./home-data";
@@ -227,6 +228,24 @@ export default async function Home({ searchParams }: HomeProps) {
         >
           {homeData.user ? (
             <GroupJoinForm />
+          ) : (
+            <LoginForm />
+          )}
+        </AppModal>
+      ) : null}
+
+      {modal === "reschedule" ? (
+        <AppModal
+          description={
+            homeData.user
+              ? "이번 주 가능한 시간을 칠해두면 그룹원이 겹치는 시간을 기준으로 모임을 다시 잡을 수 있습니다."
+              : "일정을 재조율하려면 먼저 OAuth 계정으로 로그인해주세요."
+          }
+          size={homeData.user && activeGroup ? "lg" : "sm"}
+          title={homeData.user ? "이번 주 일정 재조율" : "로그인"}
+        >
+          {homeData.user && activeGroup ? (
+            <RescheduleForm groupId={activeGroup.id} />
           ) : (
             <LoginForm />
           )}

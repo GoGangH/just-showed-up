@@ -4,7 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import { startRescheduleAction, type SessionFormState } from "../actions";
 
 const initialState: SessionFormState = {};
-const hours = [18, 19, 20, 21, 22, 23];
+const hours = Array.from({ length: 15 }, (_, index) => index + 9);
 const weekdayLabels = ["일", "월", "화", "수", "목", "금", "토"];
 
 function toLocalInputValue(date: Date) {
@@ -81,7 +81,7 @@ export function RescheduleForm({ groupId }: { groupId: string }) {
         </div>
 
         <div className="mt-3 overflow-x-auto rounded-md border border-neutral-200">
-          <div className="grid min-w-[560px] grid-cols-[72px_repeat(5,minmax(88px,1fr))]">
+          <div className="grid min-w-[420px] grid-cols-[56px_repeat(5,minmax(58px,1fr))]">
             <div className="border-b border-r border-neutral-200 bg-neutral-50 p-2 text-xs font-semibold text-neutral-500">
               시간
             </div>
@@ -99,8 +99,8 @@ export function RescheduleForm({ groupId }: { groupId: string }) {
 
             {hours.map((hour) => (
               <div className="contents" key={hour}>
-                <div className="border-b border-r border-neutral-200 bg-neutral-50 p-2 text-xs font-semibold text-neutral-500">
-                  {hour}:00
+                <div className="border-b border-r border-neutral-200 bg-neutral-50 px-2 py-1 text-xs font-semibold text-neutral-500">
+                  {String(hour).padStart(2, "0")}
                 </div>
                 {days.map((day) => {
                   const slot = new Date(day);
@@ -112,10 +112,10 @@ export function RescheduleForm({ groupId }: { groupId: string }) {
                     <button
                       aria-pressed={isSelected}
                       aria-label={`${day.getMonth() + 1}/${day.getDate()} ${hour}:00 가능`}
-                      className={`h-11 border-b border-r border-neutral-200 text-xs transition last:border-r-0 ${
+                      className={`h-7 border-b border-r border-neutral-200 text-xs transition last:border-r-0 ${
                         isSelected
-                          ? "bg-neutral-900 text-transparent hover:bg-neutral-800"
-                          : "bg-white text-transparent hover:bg-neutral-100"
+                          ? "bg-teal-600 text-transparent hover:bg-teal-700"
+                          : "bg-white text-transparent hover:bg-teal-50"
                       }`}
                       key={value}
                       onClick={() => toggleSlot(value)}
@@ -132,10 +132,10 @@ export function RescheduleForm({ groupId }: { groupId: string }) {
         <div className="mt-3 flex items-center justify-between gap-3 text-xs text-neutral-500">
           <span>겹침 적음</span>
           <div className="flex flex-1 items-center justify-center gap-1">
-            <span className="h-3 w-10 rounded-sm bg-neutral-200" />
-            <span className="h-3 w-10 rounded-sm bg-neutral-400" />
-            <span className="h-3 w-10 rounded-sm bg-neutral-700" />
-            <span className="h-3 w-10 rounded-sm bg-neutral-950" />
+            <span className="h-3 w-10 rounded-sm bg-teal-100" />
+            <span className="h-3 w-10 rounded-sm bg-teal-300" />
+            <span className="h-3 w-10 rounded-sm bg-teal-500" />
+            <span className="h-3 w-10 rounded-sm bg-teal-700" />
           </div>
           <span>겹침 많음</span>
         </div>
