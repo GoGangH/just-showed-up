@@ -8,7 +8,7 @@ import { GroupCreateForm } from "@/app/groups/new/GroupCreateForm";
 import { LoginForm } from "@/app/login/LoginForm";
 import { getRescheduleOverview } from "@/app/sessions/reschedule/data";
 import { RescheduleForm } from "@/app/sessions/reschedule/RescheduleForm";
-import { CalendarDays, CheckCircle2, LogIn, MessageCircle, Plus, UserRound } from "lucide-react";
+import { CalendarDays, CheckCircle2, MessageCircle, Plus } from "lucide-react";
 import Link from "next/link";
 import { getHomeData } from "./home-data";
 
@@ -24,6 +24,9 @@ export default async function Home({ searchParams }: HomeProps) {
   const homeData = await getHomeData();
   const activeGroup = homeData.groups.find((item) => item.id === group) ?? homeData.groups[0] ?? null;
   const isSignedIn = Boolean(homeData.user);
+  const displayName =
+    homeData.user?.name ?? homeData.user?.email?.split("@")[0] ?? "사용자";
+  const displayInitial = displayName.trim().slice(0, 1).toUpperCase() || "?";
   const rescheduleOverview =
     homeData.user && activeGroup
       ? await getRescheduleOverview(activeGroup.id)
@@ -54,8 +57,28 @@ export default async function Home({ searchParams }: HomeProps) {
                 >
                   초대 참여
                 </Link>
-                <Link className="rounded-md border border-neutral-200 bg-white p-2" href="/logout">
-                  <UserRound size={18} />
+                <div className="flex items-center gap-2 rounded-md border border-neutral-200 bg-white px-2 py-1.5">
+                  {homeData.user.avatarUrl ? (
+                    <img
+                      alt=""
+                      className="h-7 w-7 rounded-full object-cover"
+                      referrerPolicy="no-referrer"
+                      src={homeData.user.avatarUrl}
+                    />
+                  ) : (
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white">
+                      {displayInitial}
+                    </span>
+                  )}
+                  <span className="hidden max-w-28 truncate text-sm font-semibold text-neutral-800 sm:inline">
+                    {displayName}
+                  </span>
+                </div>
+                <Link
+                  className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-600 hover:text-neutral-900"
+                  href="/logout"
+                >
+                  로그아웃
                 </Link>
               </>
             ) : (
