@@ -245,7 +245,10 @@ export default async function Home({ searchParams }: HomeProps) {
           title={homeData.user ? "이번 주 일정 재조율" : "로그인"}
         >
           {homeData.user && activeGroup ? (
-            <RescheduleForm groupId={activeGroup.id} />
+            <RescheduleForm
+              defaultMeetingDay={activeGroup.default_meeting_day}
+              groupId={activeGroup.id}
+            />
           ) : (
             <LoginForm />
           )}

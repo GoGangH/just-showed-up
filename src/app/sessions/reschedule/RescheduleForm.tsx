@@ -12,6 +12,18 @@ const timeSlots = Array.from({ length: 30 }, (_, index) => {
   };
 });
 const weekdayLabels = ["일", "월", "화", "수", "목", "금", "토"];
+const availabilityColors = [
+  "#ccfbf1",
+  "#99f6e4",
+  "#5eead4",
+  "#2dd4bf",
+  "#14b8a6",
+  "#0d9488",
+  "#0f766e",
+  "#115e59",
+  "#134e4a",
+  "#042f2e",
+];
 type DragMode = "select" | "clear" | null;
 
 function toLocalInputValue(date: Date) {
@@ -32,11 +44,14 @@ function formatHourLabel(hour: number, minute: number) {
   return `${hour}시`;
 }
 
-function buildDays() {
+function buildDays(defaultMeetingDay?: number | null) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const hasMeetingDay =
+    typeof defaultMeetingDay === "number" && defaultMeetingDay >= 0 && defaultMeetingDay <= 6;
+  const dayCount = hasMeetingDay ? ((defaultMeetingDay - today.getDay() + 7) % 7) + 1 : 5;
 
-  return Array.from({ length: 5 }, (_, index) => {
+  return Array.from({ length: dayCount }, (_, index) => {
     const date = new Date(today);
     date.setDate(today.getDate() + index);
     return date;
@@ -62,22 +77,38 @@ function buildDemoCounts(days: Date[]) {
   return counts;
 }
 
-function getAvailabilityClass(count: number, isSelected: boolean) {
-  const ownSelectionClass = isSelected ? " outline outline-1 outline-teal-900/45 outline-offset-[-1px]" : "";
-
-  if (count >= 4) return `bg-teal-700 hover:bg-teal-800${ownSelectionClass}`;
-  if (count === 3) return `bg-teal-500 hover:bg-teal-600${ownSelectionClass}`;
-  if (count === 2) return `bg-teal-300 hover:bg-teal-400${ownSelectionClass}`;
-  if (count === 1) return `bg-teal-100 hover:bg-teal-200${ownSelectionClass}`;
-  return "bg-white hover:bg-teal-50";
+function getAvailabilityColor(count: number) {
+  if (count <= 0) return undefined;
+  return availabilityColors[Math.min(count, availabilityColors.length) - 1];
 }
 
-export function RescheduleForm({ groupId }: { groupId: string }) {
+export function RescheduleForm({
+  defaultMeetingDay = null,
+  groupId,
+}: {
+  defaultMeetingDay?: number | null;
+  groupId: string;
+}) {
   const [state, formAction, pending] = useActionState(startRescheduleAction, initialState);
-  const days = useMemo(buildDays, []);
+  const days = useMemo(() => buildDays(defaultMeetingDay), [defaultMeetingDay]);
   const existingCounts = useMemo(() => buildDemoCounts(days), [days]);
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const maxVisibleCount = useMemo(() => {
+    let maxCount = 0;
+
+    days.forEach((day) => {
+      timeSlots.forEach(({ hour, minute }) => {
+        const slot = new Date(day);
+        slot.setHours(hour, minute, 0, 0);
+        const value = toLocalInputValue(slot);
+        const count = (existingCounts.get(value) ?? 0) + (selected.has(value) ? 1 : 0);
+        maxCount = Math.max(maxCount, count);
+      });
+    });
+
+    return Math.min(Math.max(maxCount, 1), availabilityColors.length);
+  }, [days, existingCounts, selected]);
 
   useEffect(() => {
     function stopDragging() {
@@ -132,7 +163,7 @@ export function RescheduleForm({ groupId }: { groupId: string }) {
           <div>
             <p className="text-sm font-medium text-neutral-700">가능한 시간 선택</p>
             <p className="mt-1 text-xs text-neutral-500">
-              다른 사람이 선택한 시간은 미리 칠해져 있고, 그 위에 내 가능 시간을 칠하면 한 단계 더 진해집니다.
+              다른 사람이 선택한 시간은 미리 칠해져 있고, 그 위에 내 가능 시간을 칠하면 인원수만큼 색이 진해집니다.
             </p>
           </div>
           <p className="text-sm font-semibold text-neutral-700">{selected.size}개 선택</p>
@@ -175,16 +206,14 @@ export function RescheduleForm({ groupId }: { groupId: string }) {
                       aria-label={`${day.getMonth() + 1}/${day.getDate()} ${timeLabel}, ${visibleCount}명 가능`}
                       className={`h-4 border-r border-t border-neutral-100 transition last:border-r-0 ${
                         minute === 0 ? "border-t-neutral-200" : "border-t-neutral-100"
-                      } ${getAvailabilityClass(
-                        visibleCount,
-                        isSelected,
-                      )}`}
+                      } ${visibleCount > 0 ? "hover:brightness-95" : "bg-white hover:bg-teal-50"}`}
                       key={value}
                       onPointerDown={(event) => {
                         event.preventDefault();
                         startDrag(value, isSelected);
                       }}
                       onPointerEnter={() => paintDuringDrag(value)}
+                      style={{ backgroundColor: getAvailabilityColor(visibleCount) }}
                       type="button"
                     >
                       <span className="sr-only">선택</span>
@@ -198,23 +227,23 @@ export function RescheduleForm({ groupId }: { groupId: string }) {
 
         <div className="mt-3 rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">
           <p className="font-semibold text-neutral-700">색상 기준</p>
-          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <span className="inline-flex items-center gap-2">
-              <span className="h-3 w-6 rounded-sm bg-teal-100" /> 1명 가능
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="h-3 w-6 rounded-sm bg-teal-300" /> 2명 가능
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="h-3 w-6 rounded-sm bg-teal-500" /> 3명 가능
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="h-3 w-6 rounded-sm bg-teal-700" /> 4명 이상
-            </span>
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {Array.from({ length: maxVisibleCount }, (_, index) => {
+              const count = index + 1;
+              return (
+                <span className="inline-flex items-center gap-2" key={count}>
+                  <span
+                    className="h-3 w-6 rounded-sm"
+                    style={{ backgroundColor: availabilityColors[index] }}
+                  />
+                  {count}명 가능
+                </span>
+              );
+            })}
           </div>
           <p className="mt-2">
-            테두리가 생긴 칸은 내가 이번에 선택한 시간입니다. 실제 DB 응답이 연결되면 이 색은 그룹원
-            응답 수로 계산됩니다.
+            색상은 최대 10명까지 단계적으로 진해집니다. 실제 DB 응답이 연결되면 이 색은 그룹원 응답
+            수로 계산됩니다.
           </p>
         </div>
       </div>
