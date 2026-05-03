@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   try {
     const response = await fetch(target, {
       headers: {
-        "user-agent": "ildan-om-link-preview/0.1",
+        "user-agent": "just-showed-up-link-preview/0.1",
       },
       next: { revalidate: 60 * 60 * 24 },
     });

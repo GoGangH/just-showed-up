@@ -2,6 +2,8 @@
 
 모임 전에 각자의 주간 기록을 남기고, 모임 뒤에는 작성자 정보가 DB에 남지 않는 익명 피드백을 받는 반응형 웹 서비스입니다.
 
+Project slug: `just-showed-up`
+
 ## Stack
 
 - Next.js App Router

@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "ildan-om",
+      "name": "just-showed-up",
       "dependencies": {
         "@supabase/ssr": "^0.5.2",
         "@supabase/supabase-js": "^2.49.4",
