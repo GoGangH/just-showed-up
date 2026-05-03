@@ -85,6 +85,38 @@ export type Database = {
         };
         Update: Partial<Database["public"]["Tables"]["study_sessions"]["Row"]>;
       };
+      session_time_slots: {
+        Row: {
+          id: string;
+          session_id: string;
+          starts_at: string;
+          ends_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          starts_at: string;
+          ends_at: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["session_time_slots"]["Row"]>;
+      };
+      session_availabilities: {
+        Row: {
+          session_id: string;
+          slot_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          session_id: string;
+          slot_id: string;
+          user_id?: string;
+          created_at?: string;
+        };
+        Update: never;
+      };
       weekly_posts: {
         Row: {
           id: string;

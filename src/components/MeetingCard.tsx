@@ -1,5 +1,6 @@
 import { CalendarClock, MapPin, RotateCcw, UsersRound } from "lucide-react";
 import type { HomeGroup } from "@/app/home-data";
+import Link from "next/link";
 
 const slots = [
   { label: "월 20:00", count: 3 },
@@ -58,9 +59,12 @@ export function MeetingCard({ group }: { group: HomeGroup }) {
           <button className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white">
             참석 가능
           </button>
-          <button className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700">
+          <Link
+            className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-center text-sm font-semibold text-neutral-700"
+            href={`/sessions/reschedule?group=${group.id}`}
+          >
             이번 주 어려워요
-          </button>
+          </Link>
         </div>
       </div>
 
