@@ -226,9 +226,11 @@ export function RescheduleForm({
 
             {timeSlots.map(({ hour, minute }, slotIndex) => (
               <div className="contents" key={`${hour}:${minute}`}>
-                <div className="border-r border-neutral-200 bg-neutral-50 px-2 text-xs font-semibold leading-4 text-neutral-500">
-                  {formatHourLabel(hour, minute)}
-                </div>
+                {minute === 0 ? (
+                  <div className="row-span-2 flex items-center border-r border-t border-neutral-200 bg-neutral-50 px-2 text-xs font-semibold text-neutral-500">
+                    {formatHourLabel(hour, minute)}
+                  </div>
+                ) : null}
                 {days.map((day, dayIndex) => {
                   const slot = new Date(day);
                   slot.setHours(hour, minute, 0, 0);
