@@ -1,5 +1,6 @@
 import { AppModal } from "@/components/AppModal";
 import { FeedPreview } from "@/components/FeedPreview";
+import { GroupList } from "@/components/GroupList";
 import { MeetingCard } from "@/components/MeetingCard";
 import { PostComposer } from "@/components/PostComposer";
 import { Sidebar } from "@/components/Sidebar";
@@ -12,14 +13,15 @@ import { getHomeData } from "./home-data";
 
 type HomeProps = {
   searchParams: Promise<{
+    group?: string;
     modal?: string;
   }>;
 };
 
 export default async function Home({ searchParams }: HomeProps) {
-  const { modal } = await searchParams;
+  const { group, modal } = await searchParams;
   const homeData = await getHomeData();
-  const activeGroup = homeData.groups[0] ?? null;
+  const activeGroup = homeData.groups.find((item) => item.id === group) ?? homeData.groups[0] ?? null;
 
   return (
     <main className="flex min-h-screen">
@@ -49,13 +51,13 @@ export default async function Home({ searchParams }: HomeProps) {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-neutral-500">
-                    {homeData.user ? "현재 그룹" : "서비스 준비"}
+                    {homeData.user ? "대시보드" : "서비스 준비"}
                   </p>
                   <h1 className="mt-2 text-3xl font-semibold tracking-normal">
-                    {activeGroup?.name ?? "쉬었음청년 스터디"}
+                    {homeData.user ? "내 스터디 현황" : "쉬었음청년 스터디"}
                   </h1>
                   <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-600">
-                    주간 모임 전에 기록과 자료를 공유하고, 모임 후에는 익명으로 피드백을 남깁니다.
+                    그룹별 모임 시간, 장소, 이번 주 작성 상태를 한 화면에서 확인합니다.
                   </p>
                 </div>
               </div>
@@ -107,6 +109,10 @@ export default async function Home({ searchParams }: HomeProps) {
                   </Link>
                 </div>
               </section>
+            ) : null}
+
+            {homeData.user ? (
+              <GroupList groups={homeData.groups} activeGroupId={activeGroup?.id ?? null} />
             ) : null}
 
             {activeGroup ? (

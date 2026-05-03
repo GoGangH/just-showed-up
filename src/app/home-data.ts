@@ -1,8 +1,15 @@
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentWeekStart } from "@/lib/dates/week";
 import type { Database } from "@/lib/supabase/database.types";
 
-export type HomeGroup = Pick<
+export type HomeMember = {
+  userId: string;
+  nickname: string;
+  postedThisWeek: boolean;
+};
+
+export type HomeGroupBase = Pick<
   Database["public"]["Tables"]["groups"]["Row"],
   | "id"
   | "name"
@@ -14,6 +21,10 @@ export type HomeGroup = Pick<
   | "default_location_url"
   | "default_location_note"
 >;
+
+export type HomeGroup = HomeGroupBase & {
+  members: HomeMember[];
+};
 
 export type HomePost = Pick<
   Database["public"]["Tables"]["weekly_posts"]["Row"],
@@ -87,7 +98,55 @@ export async function getHomeData(): Promise<HomeData> {
     )
     .order("created_at", { ascending: true });
 
-  const groups = (data ?? []) as HomeGroup[];
+  const groupBases = (data ?? []) as HomeGroupBase[];
+  const groupIds = groupBases.map((group) => group.id);
+  let groups: HomeGroup[] = groupBases.map((group) => ({ ...group, members: [] }));
+
+  if (groupIds.length > 0) {
+    const { data: memberRows } = await supabase
+      .from("group_members")
+      .select("group_id,user_id")
+      .in("group_id", groupIds);
+
+    const members = (memberRows ?? []) as { group_id: string; user_id: string }[];
+    const userIds = Array.from(new Set(members.map((member) => member.user_id)));
+
+    const { data: profileRows } =
+      userIds.length > 0
+        ? await supabase.from("profiles").select("id,nickname").in("id", userIds)
+        : { data: [] };
+
+    const profiles = new Map(
+      ((profileRows ?? []) as { id: string; nickname: string }[]).map((profile) => [
+        profile.id,
+        profile.nickname,
+      ]),
+    );
+
+    const { data: weeklyPostRows } = await supabase
+      .from("weekly_posts")
+      .select("group_id,author_id")
+      .in("group_id", groupIds)
+      .eq("week_start", getCurrentWeekStart());
+
+    const postedKeys = new Set(
+      ((weeklyPostRows ?? []) as { group_id: string; author_id: string }[]).map(
+        (post) => `${post.group_id}:${post.author_id}`,
+      ),
+    );
+
+    groups = groupBases.map((group) => ({
+      ...group,
+      members: members
+        .filter((member) => member.group_id === group.id)
+        .map((member) => ({
+          userId: member.user_id,
+          nickname: profiles.get(member.user_id) ?? "멤버",
+          postedThisWeek: postedKeys.has(`${group.id}:${member.user_id}`),
+        })),
+    }));
+  }
+
   const activeGroup = groups[0] ?? null;
   let posts: HomePost[] = [];
   let postError: string | null = null;
