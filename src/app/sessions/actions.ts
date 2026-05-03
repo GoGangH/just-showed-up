@@ -45,10 +45,6 @@ export async function startRescheduleAction(
     return { error: "그룹 정보가 필요합니다." };
   }
 
-  if (slotValues.length < 2) {
-    return { error: "후보 시간은 최소 2개 이상 선택해주세요." };
-  }
-
   const supabase = await createClient();
   const {
     data: { user },
@@ -87,8 +83,12 @@ export async function startRescheduleAction(
       ends_at: slot.ends_at,
     }));
 
-  if (slots.length < 2) {
+  if (slotValues.length > 0 && slots.length !== slotValues.length) {
     return { error: "후보 시간 형식을 확인해주세요." };
+  }
+
+  if (slots.length === 0) {
+    redirect(`/?group=${groupId}`);
   }
 
   const { error: slotError } = await supabase.from("session_time_slots").insert(slots as never);

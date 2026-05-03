@@ -82,6 +82,13 @@ function getAvailabilityColor(count: number) {
   return availabilityColors[Math.min(count, availabilityColors.length) - 1];
 }
 
+function getCellBorderColor(count: number, minute: number) {
+  if (count <= 0) return minute === 0 ? "#e5e5e5" : "#f5f5f5";
+
+  const color = availabilityColors[Math.min(count, availabilityColors.length) - 1];
+  return color;
+}
+
 export function RescheduleForm({
   defaultMeetingDay = null,
   groupId,
@@ -204,16 +211,19 @@ export function RescheduleForm({
                     <button
                       aria-pressed={isSelected}
                       aria-label={`${day.getMonth() + 1}/${day.getDate()} ${timeLabel}, ${visibleCount}명 가능`}
-                      className={`h-4 border-r border-t border-neutral-100 transition last:border-r-0 ${
-                        minute === 0 ? "border-t-neutral-200" : "border-t-neutral-100"
-                      } ${visibleCount > 0 ? "hover:brightness-95" : "bg-white hover:bg-teal-50"}`}
+                      className={`h-4 border-r border-t transition last:border-r-0 ${
+                        visibleCount > 0 ? "hover:brightness-95" : "bg-white hover:bg-teal-50"
+                      }`}
                       key={value}
                       onPointerDown={(event) => {
                         event.preventDefault();
                         startDrag(value, isSelected);
                       }}
                       onPointerEnter={() => paintDuringDrag(value)}
-                      style={{ backgroundColor: getAvailabilityColor(visibleCount) }}
+                      style={{
+                        backgroundColor: getAvailabilityColor(visibleCount),
+                        borderColor: getCellBorderColor(visibleCount, minute),
+                      }}
                       type="button"
                     >
                       <span className="sr-only">선택</span>
@@ -241,10 +251,7 @@ export function RescheduleForm({
               );
             })}
           </div>
-          <p className="mt-2">
-            색상은 최대 10명까지 단계적으로 진해집니다. 실제 DB 응답이 연결되면 이 색은 그룹원 응답
-            수로 계산됩니다.
-          </p>
+          <p className="mt-2">후보 시간이 없으면 아무 칸도 선택하지 않고 저장할 수 있습니다.</p>
         </div>
       </div>
 
