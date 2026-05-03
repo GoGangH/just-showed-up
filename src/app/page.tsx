@@ -2,7 +2,7 @@ import { FeedPreview } from "@/components/FeedPreview";
 import { MeetingCard } from "@/components/MeetingCard";
 import { PostComposer } from "@/components/PostComposer";
 import { Sidebar } from "@/components/Sidebar";
-import { Bell, CalendarDays, CheckCircle2, MessageCircle } from "lucide-react";
+import { CalendarDays, CheckCircle2, LogIn, MessageCircle, UserRound } from "lucide-react";
 import Link from "next/link";
 import { getHomeData } from "./home-data";
 
@@ -12,7 +12,7 @@ export default async function Home() {
 
   return (
     <main className="flex min-h-screen">
-      <Sidebar />
+      <Sidebar user={homeData.user} />
       <div className="w-full">
         <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
           <div className="flex items-center justify-between">
@@ -20,9 +20,15 @@ export default async function Home() {
               <p className="text-xl font-bold">일단옴</p>
               <p className="text-xs text-neutral-600">쉬었음청년 스터디</p>
             </div>
-            <button className="rounded-md border border-neutral-200 bg-white p-2">
-              <Bell size={18} />
-            </button>
+            {homeData.user ? (
+              <Link className="rounded-md border border-neutral-200 bg-white p-2" href="/logout">
+                <UserRound size={18} />
+              </Link>
+            ) : (
+              <Link className="rounded-md border border-neutral-200 bg-white p-2" href="/login">
+                <LogIn size={18} />
+              </Link>
+            )}
           </div>
         </header>
 
@@ -40,31 +46,6 @@ export default async function Home() {
                   <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-600">
                     주간 모임 전에 기록과 자료를 공유하고, 모임 후에는 익명으로 피드백을 남깁니다.
                   </p>
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  {homeData.user ? (
-                    <>
-                      <Link
-                        className="rounded-md bg-neutral-900 px-4 py-2 text-center text-sm font-semibold text-white"
-                        href="/groups/new"
-                      >
-                        그룹 만들기
-                      </Link>
-                      <Link
-                        className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-center text-sm font-semibold text-neutral-700"
-                        href="/groups/join"
-                      >
-                        초대 코드 참여
-                      </Link>
-                    </>
-                  ) : (
-                    <Link
-                      className="rounded-md bg-neutral-900 px-4 py-2 text-center text-sm font-semibold text-white"
-                      href="/login"
-                    >
-                      로그인
-                    </Link>
-                  )}
                 </div>
               </div>
             </section>
@@ -89,14 +70,8 @@ export default async function Home() {
               <section className="rounded-lg border border-neutral-200 bg-white p-5">
                 <h2 className="text-xl font-semibold">로그인이 필요합니다</h2>
                 <p className="mt-2 text-sm leading-6 text-neutral-600">
-                  스터디 그룹을 만들거나 초대 코드로 참여하려면 먼저 로그인해주세요.
+                  좌측 내비게이션의 로그인 버튼으로 계정에 접속한 뒤 그룹을 만들거나 초대 코드로 참여할 수 있습니다.
                 </p>
-                <Link
-                  className="mt-4 inline-flex rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white"
-                  href="/login"
-                >
-                  로그인하러 가기
-                </Link>
               </section>
             ) : null}
 
