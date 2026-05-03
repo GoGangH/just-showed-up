@@ -3,6 +3,7 @@ import { FeedPreview } from "@/components/FeedPreview";
 import { GroupList } from "@/components/GroupList";
 import { MeetingCard } from "@/components/MeetingCard";
 import { PostComposer } from "@/components/PostComposer";
+import { ProfileMenu } from "@/components/ProfileMenu";
 import { GroupJoinForm } from "@/app/groups/join/GroupJoinForm";
 import { GroupCreateForm } from "@/app/groups/new/GroupCreateForm";
 import { LoginForm } from "@/app/login/LoginForm";
@@ -26,7 +27,6 @@ export default async function Home({ searchParams }: HomeProps) {
   const isSignedIn = Boolean(homeData.user);
   const displayName =
     homeData.user?.name ?? homeData.user?.email?.split("@")[0] ?? "사용자";
-  const displayInitial = displayName.trim().slice(0, 1).toUpperCase() || "?";
   const rescheduleOverview =
     homeData.user && activeGroup
       ? await getRescheduleOverview(activeGroup.id)
@@ -57,29 +57,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 >
                   초대 참여
                 </Link>
-                <div className="flex items-center gap-2 rounded-md border border-neutral-200 bg-white px-2 py-1.5">
-                  {homeData.user.avatarUrl ? (
-                    <img
-                      alt=""
-                      className="h-7 w-7 rounded-full object-cover"
-                      referrerPolicy="no-referrer"
-                      src={homeData.user.avatarUrl}
-                    />
-                  ) : (
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white">
-                      {displayInitial}
-                    </span>
-                  )}
-                  <span className="hidden max-w-28 truncate text-sm font-semibold text-neutral-800 sm:inline">
-                    {displayName}
-                  </span>
-                </div>
-                <Link
-                  className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-600 hover:text-neutral-900"
-                  href="/logout"
-                >
-                  로그아웃
-                </Link>
+                <ProfileMenu avatarUrl={homeData.user.avatarUrl} displayName={displayName} />
               </>
             ) : (
               <>
@@ -285,6 +263,39 @@ export default async function Home({ searchParams }: HomeProps) {
           ) : (
             <LoginForm />
           )}
+        </AppModal>
+      ) : null}
+
+      {modal === "profile" && homeData.user ? (
+        <AppModal title="내 정보" size="sm">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              {homeData.user.avatarUrl ? (
+                <img
+                  alt=""
+                  className="h-12 w-12 rounded-full object-cover"
+                  referrerPolicy="no-referrer"
+                  src={homeData.user.avatarUrl}
+                />
+              ) : (
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-900 text-lg font-semibold text-white">
+                  {displayName.trim().slice(0, 1).toUpperCase() || "?"}
+                </span>
+              )}
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-neutral-900">{displayName}</p>
+                <p className="truncate text-sm text-neutral-500">
+                  {homeData.user.email ?? "이메일 정보 없음"}
+                </p>
+              </div>
+            </div>
+            <Link
+              className="block rounded-md border border-neutral-200 px-3 py-2 text-center text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+              href="/logout"
+            >
+              로그아웃
+            </Link>
+          </div>
         </AppModal>
       ) : null}
     </main>
