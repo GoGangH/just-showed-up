@@ -1,12 +1,23 @@
+import { AppModal } from "@/components/AppModal";
 import { FeedPreview } from "@/components/FeedPreview";
 import { MeetingCard } from "@/components/MeetingCard";
 import { PostComposer } from "@/components/PostComposer";
 import { Sidebar } from "@/components/Sidebar";
+import { GroupJoinForm } from "@/app/groups/join/GroupJoinForm";
+import { GroupCreateForm } from "@/app/groups/new/GroupCreateForm";
+import { LoginForm } from "@/app/login/LoginForm";
 import { CalendarDays, CheckCircle2, LogIn, MessageCircle, UserRound } from "lucide-react";
 import Link from "next/link";
 import { getHomeData } from "./home-data";
 
-export default async function Home() {
+type HomeProps = {
+  searchParams: Promise<{
+    modal?: string;
+  }>;
+};
+
+export default async function Home({ searchParams }: HomeProps) {
+  const { modal } = await searchParams;
   const homeData = await getHomeData();
   const activeGroup = homeData.groups[0] ?? null;
 
@@ -25,7 +36,7 @@ export default async function Home() {
                 <UserRound size={18} />
               </Link>
             ) : (
-              <Link className="rounded-md border border-neutral-200 bg-white p-2" href="/login">
+              <Link className="rounded-md border border-neutral-200 bg-white p-2" href="/?modal=login">
                 <LogIn size={18} />
               </Link>
             )}
@@ -70,7 +81,7 @@ export default async function Home() {
               <section className="rounded-lg border border-neutral-200 bg-white p-5">
                 <h2 className="text-xl font-semibold">로그인이 필요합니다</h2>
                 <p className="mt-2 text-sm leading-6 text-neutral-600">
-                  좌측 내비게이션의 로그인 버튼으로 계정에 접속한 뒤 그룹을 만들거나 초대 코드로 참여할 수 있습니다.
+                  내비게이션의 로그인 버튼으로 계정에 접속한 뒤 그룹을 만들거나 초대 코드로 참여할 수 있습니다.
                 </p>
               </section>
             ) : null}
@@ -84,13 +95,13 @@ export default async function Home() {
                 <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                   <Link
                     className="rounded-md bg-neutral-900 px-4 py-2 text-center text-sm font-semibold text-white"
-                    href="/groups/new"
+                    href="/?modal=new-group"
                   >
                     그룹 만들기
                   </Link>
                   <Link
                     className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-center text-sm font-semibold text-neutral-700"
-                    href="/groups/join"
+                    href="/?modal=join-group"
                   >
                     초대 코드 참여
                   </Link>
@@ -154,6 +165,47 @@ export default async function Home() {
           </aside>
         </div>
       </div>
+
+      {modal === "login" ? (
+        <AppModal
+          description="OAuth 계정으로 로그인하고 그룹의 주간 기록과 모임 일정을 관리합니다."
+          title="로그인"
+        >
+          <LoginForm />
+        </AppModal>
+      ) : null}
+
+      {modal === "new-group" ? (
+        <AppModal
+          description="기본 모임 시간과 장소를 설정해두면 매주 같은 기준으로 스터디를 운영할 수 있습니다."
+          title="그룹 만들기"
+        >
+          {homeData.user ? (
+            <GroupCreateForm />
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm leading-6 text-neutral-600">그룹을 만들려면 먼저 로그인해주세요.</p>
+              <LoginForm />
+            </div>
+          )}
+        </AppModal>
+      ) : null}
+
+      {modal === "join-group" ? (
+        <AppModal
+          description="그룹 관리자에게 받은 초대 코드를 입력하면 스터디 그룹에 참여할 수 있습니다."
+          title="초대 코드로 참여"
+        >
+          {homeData.user ? (
+            <GroupJoinForm />
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm leading-6 text-neutral-600">그룹에 참여하려면 먼저 로그인해주세요.</p>
+              <LoginForm />
+            </div>
+          )}
+        </AppModal>
+      ) : null}
     </main>
   );
 }

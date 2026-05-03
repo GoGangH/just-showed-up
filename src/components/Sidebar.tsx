@@ -21,10 +21,10 @@ export function Sidebar({ user }: { user: SidebarUser }) {
         <Link className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="/">
           <UsersRound size={17} /> 쉬었음청년 스터디
         </Link>
-        <Link className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="/groups/new">
+        <Link className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="/?modal=new-group">
           <Plus size={17} /> 그룹 만들기
         </Link>
-        <Link className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="/groups/join">
+        <Link className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100" href="/?modal=join-group">
           <LogIn size={17} /> 초대 코드 참여
         </Link>
       </nav>
@@ -60,7 +60,7 @@ export function Sidebar({ user }: { user: SidebarUser }) {
         ) : (
           <Link
             className="flex items-center justify-center gap-2 rounded-md bg-neutral-900 px-3 py-2 text-sm font-semibold text-white"
-            href="/login"
+            href="/?modal=login"
           >
             <LogIn size={16} /> 로그인
           </Link>
