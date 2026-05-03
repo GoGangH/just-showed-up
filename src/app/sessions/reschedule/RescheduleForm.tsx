@@ -85,8 +85,39 @@ function getAvailabilityColor(count: number) {
 function getCellBorderColor(count: number, minute: number) {
   if (count <= 0) return minute === 0 ? "#e5e5e5" : "#f5f5f5";
 
-  const color = availabilityColors[Math.min(count, availabilityColors.length) - 1];
-  return color;
+  return "rgba(15, 118, 110, 0.18)";
+}
+
+function buildSelectionShadow({
+  dayIndex,
+  days,
+  selected,
+  slotIndex,
+}: {
+  dayIndex: number;
+  days: Date[];
+  selected: Set<string>;
+  slotIndex: number;
+}) {
+  const shadows: string[] = [];
+  const outlineColor = "#0f766e";
+
+  function isSelectedAt(nextSlotIndex: number, nextDayIndex: number) {
+    const timeSlot = timeSlots[nextSlotIndex];
+    const day = days[nextDayIndex];
+    if (!timeSlot || !day) return false;
+
+    const slot = new Date(day);
+    slot.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
+    return selected.has(toLocalInputValue(slot));
+  }
+
+  if (!isSelectedAt(slotIndex - 1, dayIndex)) shadows.push(`inset 0 1px 0 ${outlineColor}`);
+  if (!isSelectedAt(slotIndex + 1, dayIndex)) shadows.push(`inset 0 -1px 0 ${outlineColor}`);
+  if (!isSelectedAt(slotIndex, dayIndex - 1)) shadows.push(`inset 1px 0 0 ${outlineColor}`);
+  if (!isSelectedAt(slotIndex, dayIndex + 1)) shadows.push(`inset -1px 0 0 ${outlineColor}`);
+
+  return shadows.join(", ");
 }
 
 export function RescheduleForm({
@@ -193,12 +224,12 @@ export function RescheduleForm({
               </div>
             ))}
 
-            {timeSlots.map(({ hour, minute }) => (
+            {timeSlots.map(({ hour, minute }, slotIndex) => (
               <div className="contents" key={`${hour}:${minute}`}>
                 <div className="border-r border-neutral-200 bg-neutral-50 px-2 text-xs font-semibold leading-4 text-neutral-500">
                   {formatHourLabel(hour, minute)}
                 </div>
-                {days.map((day) => {
+                {days.map((day, dayIndex) => {
                   const slot = new Date(day);
                   slot.setHours(hour, minute, 0, 0);
                   const value = toLocalInputValue(slot);
@@ -223,6 +254,9 @@ export function RescheduleForm({
                       style={{
                         backgroundColor: getAvailabilityColor(visibleCount),
                         borderColor: getCellBorderColor(visibleCount, minute),
+                        boxShadow: isSelected
+                          ? buildSelectionShadow({ dayIndex, days, selected, slotIndex })
+                          : undefined,
                       }}
                       type="button"
                     >
