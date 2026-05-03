@@ -6,6 +6,7 @@ import { PostComposer } from "@/components/PostComposer";
 import { GroupJoinForm } from "@/app/groups/join/GroupJoinForm";
 import { GroupCreateForm } from "@/app/groups/new/GroupCreateForm";
 import { LoginForm } from "@/app/login/LoginForm";
+import { getRescheduleData } from "@/app/sessions/reschedule/data";
 import { RescheduleForm } from "@/app/sessions/reschedule/RescheduleForm";
 import { CalendarDays, CheckCircle2, LogIn, MessageCircle, Plus, UserRound } from "lucide-react";
 import Link from "next/link";
@@ -23,6 +24,10 @@ export default async function Home({ searchParams }: HomeProps) {
   const homeData = await getHomeData();
   const activeGroup = homeData.groups.find((item) => item.id === group) ?? homeData.groups[0] ?? null;
   const isSignedIn = Boolean(homeData.user);
+  const rescheduleAvailability =
+    modal === "reschedule" && homeData.user && activeGroup
+      ? await getRescheduleData(activeGroup.id)
+      : [];
 
   return (
     <main className="min-h-screen">
@@ -246,6 +251,7 @@ export default async function Home({ searchParams }: HomeProps) {
         >
           {homeData.user && activeGroup ? (
             <RescheduleForm
+              availability={rescheduleAvailability}
               defaultMeetingDay={activeGroup.default_meeting_day}
               groupId={activeGroup.id}
             />

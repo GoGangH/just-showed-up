@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { startRescheduleAction, type SessionFormState } from "../actions";
+import type { AvailabilitySummary } from "./data";
 
 const initialState: SessionFormState = {};
 const timeSlots = Array.from({ length: 30 }, (_, index) => {
@@ -58,25 +59,6 @@ function buildDays(defaultMeetingDay?: number | null) {
   });
 }
 
-function buildDemoCounts(days: Date[]) {
-  const counts = new Map<string, number>();
-
-  days.slice(1, 4).forEach((day, dayIndex) => {
-    [
-      [10, 0, 1 + dayIndex],
-      [10, 30, 2 + dayIndex],
-      [11, 0, 3],
-      [11, 30, 2],
-    ].forEach(([hour, minute, count]) => {
-      const slot = new Date(day);
-      slot.setHours(hour, minute, 0, 0);
-      counts.set(toLocalInputValue(slot), count);
-    });
-  });
-
-  return counts;
-}
-
 function getAvailabilityColor(count: number) {
   if (count <= 0) return undefined;
   return availabilityColors[Math.min(count, availabilityColors.length) - 1];
@@ -121,17 +103,35 @@ function buildSelectionShadow({
 }
 
 export function RescheduleForm({
+  availability = [],
   defaultMeetingDay = null,
   groupId,
 }: {
+  availability?: AvailabilitySummary[];
   defaultMeetingDay?: number | null;
   groupId: string;
 }) {
   const [state, formAction, pending] = useActionState(startRescheduleAction, initialState);
   const days = useMemo(() => buildDays(defaultMeetingDay), [defaultMeetingDay]);
-  const existingCounts = useMemo(() => buildDemoCounts(days), [days]);
+  const existingCounts = useMemo(
+    () =>
+      new Map(
+        availability.map((summary) => [
+          toLocalInputValue(new Date(summary.startsAt)),
+          Math.max(summary.count - (summary.selectedByMe ? 1 : 0), 0),
+        ]),
+      ),
+    [availability],
+  );
   const [dragMode, setDragMode] = useState<DragMode>(null);
-  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [selected, setSelected] = useState<Set<string>>(
+    () =>
+      new Set(
+        availability
+          .filter((summary) => summary.selectedByMe)
+          .map((summary) => toLocalInputValue(new Date(summary.startsAt))),
+      ),
+  );
   const maxVisibleCount = useMemo(() => {
     let maxCount = 0;
 

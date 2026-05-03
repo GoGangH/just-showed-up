@@ -12,6 +12,7 @@ export type SessionFormState = {
 
 type StudySessionInsert = Database["public"]["Tables"]["study_sessions"]["Insert"];
 type TimeSlotInsert = Database["public"]["Tables"]["session_time_slots"]["Insert"];
+type AvailabilityInsert = Database["public"]["Tables"]["session_availabilities"]["Insert"];
 
 function parseLocalSlot(value: string) {
   const date = new Date(value);
@@ -87,14 +88,75 @@ export async function startRescheduleAction(
     return { error: "후보 시간 형식을 확인해주세요." };
   }
 
+  const { error: deleteAvailabilityError } = await supabase
+    .from("session_availabilities")
+    .delete()
+    .eq("session_id", session.id)
+    .eq("user_id", user.id);
+
+  if (deleteAvailabilityError) {
+    return { error: "기존 가능 시간을 정리하지 못했습니다." };
+  }
+
   if (slots.length === 0) {
     redirect(`/?group=${groupId}`);
   }
 
-  const { error: slotError } = await supabase.from("session_time_slots").insert(slots as never);
+  const { data: existingSlotData, error: existingSlotError } = await supabase
+    .from("session_time_slots")
+    .select("id,starts_at")
+    .eq("session_id", session.id);
 
-  if (slotError) {
+  if (existingSlotError) {
+    return { error: "기존 후보 시간을 불러오지 못했습니다." };
+  }
+
+  const existingSlots = ((existingSlotData ?? []) as { id: string; starts_at: string }[]).map(
+    (slot) => ({
+      id: slot.id,
+      starts_at: new Date(slot.starts_at).toISOString(),
+    }),
+  );
+  const existingStarts = new Set(existingSlots.map((slot) => slot.starts_at));
+  const missingSlots = slots.filter((slot) => !existingStarts.has(slot.starts_at));
+
+  const { data: insertedSlotData, error: insertSlotError } =
+    missingSlots.length > 0
+      ? await supabase.from("session_time_slots").insert(missingSlots as never).select("id,starts_at")
+      : { data: [], error: null };
+
+  if (insertSlotError) {
     return { error: "후보 시간을 저장하지 못했습니다." };
+  }
+
+  const allSlots = [
+    ...existingSlots,
+    ...((insertedSlotData ?? []) as { id: string; starts_at: string }[]).map((slot) => ({
+      id: slot.id,
+      starts_at: new Date(slot.starts_at).toISOString(),
+    })),
+  ];
+  const slotIdsByStart = new Map(allSlots.map((slot) => [slot.starts_at, slot.id]));
+  const selectedSlotIds = slots
+    .map((slot) => slotIdsByStart.get(slot.starts_at))
+    .filter((slotId): slotId is string => Boolean(slotId));
+
+  if (selectedSlotIds.length !== slots.length) {
+    return { error: "선택한 후보 시간을 확인하지 못했습니다." };
+  }
+
+  const availabilities: AvailabilityInsert[] = selectedSlotIds.map((slotId) => ({
+    session_id: session.id,
+    slot_id: slotId,
+    user_id: user.id,
+  }));
+
+  const { error: availabilityError } = await supabase
+    .from("session_availabilities")
+    .insert(availabilities as never);
+
+  if (availabilityError) {
+    return { error: "가능 시간을 저장하지 못했습니다." };
   }
 
   redirect(`/?group=${groupId}`);

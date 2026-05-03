@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getHomeData } from "@/app/home-data";
+import { getRescheduleData } from "./data";
 import { RescheduleForm } from "./RescheduleForm";
 
 type ReschedulePageProps = {
@@ -12,6 +13,7 @@ export default async function ReschedulePage({ searchParams }: ReschedulePagePro
   const { group } = await searchParams;
   const homeData = await getHomeData();
   const activeGroup = homeData.groups.find((item) => item.id === group) ?? null;
+  const availability = group ? await getRescheduleData(group) : [];
 
   return (
     <main className="min-h-screen px-4 py-8">
@@ -31,6 +33,7 @@ export default async function ReschedulePage({ searchParams }: ReschedulePagePro
         ) : (
           <div className="mt-6">
             <RescheduleForm
+              availability={availability}
               defaultMeetingDay={activeGroup?.default_meeting_day ?? null}
               groupId={group}
             />
