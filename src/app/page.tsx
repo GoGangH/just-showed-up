@@ -192,6 +192,7 @@ export default async function Home({ searchParams }: HomeProps) {
       {modal === "login" ? (
         <AppModal
           description="OAuth 계정으로 로그인하고 그룹의 주간 기록과 모임 일정을 관리합니다."
+          size="sm"
           title="로그인"
         >
           <LoginForm />

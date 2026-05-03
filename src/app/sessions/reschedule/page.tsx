@@ -12,7 +12,7 @@ export default async function ReschedulePage({ searchParams }: ReschedulePagePro
 
   return (
     <main className="min-h-screen px-4 py-8">
-      <section className="mx-auto max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
+      <section className="mx-auto max-w-3xl rounded-lg border border-neutral-200 bg-white p-6">
         <Link className="text-sm font-semibold text-neutral-500" href="/">
           일단옴
         </Link>

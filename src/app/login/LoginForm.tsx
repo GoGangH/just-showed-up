@@ -28,10 +28,10 @@ export function LoginForm() {
   const [state, formAction, pending] = useActionState(oauthSignInAction, initialState);
 
   return (
-    <form action={formAction} className="space-y-3">
+    <form action={formAction} className="space-y-2.5">
       {providers.map((provider) => (
         <button
-          className="flex w-full items-center justify-center gap-3 rounded-md border border-neutral-300 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 hover:border-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-3 rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm font-semibold text-neutral-800 hover:border-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={pending}
           key={provider.id}
           name="provider"
