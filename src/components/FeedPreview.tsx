@@ -1,25 +1,17 @@
 import { MessageCircle, Paperclip, Sparkles } from "lucide-react";
+import type { HomePost } from "@/app/home-data";
 
-const posts = [
-  {
-    author: "민지",
-    title: "Next.js 인증 흐름 정리",
-    body: "Supabase 세션 처리와 middleware 구성을 정리했습니다. RLS 정책은 모임에서 함께 검토하고 싶습니다.",
-    meta: "링크 1 · PDF 1",
-    reactions: 6,
-    comments: 3,
-  },
-  {
-    author: "준호",
-    title: "포트폴리오 소개 문장 수정",
-    body: "Notion에 수정안을 정리했습니다. 모임에서 첫 문단의 흐름과 표현을 확인받고 싶습니다.",
-    meta: "Notion 링크",
-    reactions: 4,
-    comments: 2,
-  },
-];
+function getExcerpt(markdown: string) {
+  return markdown
+    .replace(/[#>*_`-]/g, "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(" ")
+    .slice(0, 160);
+}
 
-export function FeedPreview() {
+export function FeedPreview({ posts }: { posts: HomePost[] }) {
   return (
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-3">
@@ -30,32 +22,45 @@ export function FeedPreview() {
         <button className="text-sm font-semibold text-neutral-600 hover:text-neutral-900">전체 보기</button>
       </div>
 
+      {posts.length === 0 ? (
+        <article className="rounded-lg border border-neutral-200 bg-white p-5">
+          <h3 className="text-lg font-semibold">아직 공유글이 없습니다</h3>
+          <p className="mt-2 text-sm leading-6 text-neutral-600">
+            이번 주 모임 전에 첫 공유글을 작성해보세요.
+          </p>
+        </article>
+      ) : null}
+
       {posts.map((post) => (
         <article className="rounded-lg border border-neutral-200 bg-white p-5" key={post.title}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-neutral-500">{post.author}</p>
+              <p className="text-sm font-semibold text-neutral-500">
+                {post.author?.nickname ?? "작성자"}
+              </p>
               <h3 className="mt-1 text-lg font-semibold">{post.title}</h3>
             </div>
             <span className="rounded-md bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-600">
               이번 주
             </span>
           </div>
-          <p className="mt-3 text-sm leading-6 text-neutral-700">{post.body}</p>
-          <div className="mt-4 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm">
-            <p className="inline-flex items-center gap-2 font-semibold">
-              <Paperclip size={15} />
-              {post.meta}
-            </p>
-          </div>
+          <p className="mt-3 text-sm leading-6 text-neutral-700">{getExcerpt(post.body_markdown)}</p>
+          {post.post_links.length > 0 ? (
+            <div className="mt-4 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm">
+              <p className="inline-flex items-center gap-2 font-semibold">
+                <Paperclip size={15} />
+                {post.post_links.length}개 링크
+              </p>
+            </div>
+          ) : null}
           <div className="mt-4 flex flex-wrap gap-2 text-sm text-neutral-600">
             <span className="inline-flex items-center gap-1">
               <Sparkles size={15} />
-              익명 반응 {post.reactions}
+              익명 반응 0
             </span>
             <span className="inline-flex items-center gap-1">
               <MessageCircle size={15} />
-              익명 댓글 {post.comments}
+              익명 댓글 0
             </span>
           </div>
         </article>

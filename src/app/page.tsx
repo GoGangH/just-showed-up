@@ -126,8 +126,8 @@ export default async function Home() {
             {activeGroup ? (
               <>
                 <MeetingCard group={activeGroup} />
-                <PostComposer />
-                <FeedPreview />
+                <PostComposer groupId={activeGroup.id} />
+                <FeedPreview posts={homeData.posts} />
               </>
             ) : null}
           </div>

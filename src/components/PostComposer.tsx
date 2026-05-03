@@ -1,6 +1,7 @@
 import { FileUp, Link2, PenLine } from "lucide-react";
+import Link from "next/link";
 
-export function PostComposer() {
+export function PostComposer({ groupId }: { groupId: string }) {
   return (
     <section className="rounded-lg border border-neutral-200 bg-white p-5">
       <div className="flex items-start justify-between gap-4">
@@ -14,38 +15,30 @@ export function PostComposer() {
       </div>
 
       <div className="mt-5 space-y-3">
-        <label className="block">
-          <span className="text-sm font-medium text-neutral-700">제목</span>
-          <input
-            className="mt-1 w-full rounded-md border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-900"
-            placeholder="예: Next.js 인증 흐름 정리"
-          />
-        </label>
-        <label className="block">
-          <span className="text-sm font-medium text-neutral-700">본문</span>
-          <textarea
-            className="mt-1 min-h-40 w-full resize-y rounded-md border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-900"
-            placeholder={"Markdown으로 작성할 수 있습니다.\n\n- 이번 주 진행한 내용\n- 어려웠던 점\n- 모임에서 함께 이야기하고 싶은 질문"}
-          />
-        </label>
+        <p className="text-sm leading-6 text-neutral-600">
+          Markdown 본문, 공유 링크, 피드백 질문을 한 번에 정리할 수 있습니다.
+        </p>
       </div>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        <button className="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700">
+        <span className="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700">
           <PenLine size={16} /> 미리보기
-        </button>
-        <button className="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700">
+        </span>
+        <span className="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700">
           <Link2 size={16} /> 링크 추가
-        </button>
-        <button className="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700">
+        </span>
+        <span className="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700">
           <FileUp size={16} /> PDF/이미지
-        </button>
+        </span>
       </div>
 
       <div className="mt-4 flex justify-end">
-        <button className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white">
-          공유글 저장
-        </button>
+        <Link
+          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white"
+          href={`/posts/new?group=${groupId}`}
+        >
+          작성 화면 열기
+        </Link>
       </div>
     </section>
   );
