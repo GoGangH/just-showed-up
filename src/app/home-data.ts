@@ -164,9 +164,7 @@ export async function getHomeData(activeGroupId?: string): Promise<HomeData> {
     const postedKeys = new Set(
       ((weeklyPostRows ?? []) as { group_id: string; author_id: string; week_start: string }[])
         .filter((post) => post.week_start === currentWeekStart)
-        .map(
-        (post) => `${post.group_id}:${post.author_id}`,
-      ),
+        .map((post) => `${post.group_id}:${post.author_id}`),
     );
     const postedWeekKeys = new Set(
       ((weeklyPostRows ?? []) as { group_id: string; author_id: string; week_start: string }[]).map(
@@ -228,8 +226,8 @@ export async function getHomeData(activeGroupId?: string): Promise<HomeData> {
         "id,title,body_markdown,feedback_question,created_at,author_id,week_start,post_links(id,url,title,site_name),anonymous_comments(id),anonymous_reactions(id)",
       )
       .eq("group_id", activeGroup.id)
-      .order("created_at", { ascending: false })
-      .limit(10);
+      .order("week_start", { ascending: false })
+      .order("created_at", { ascending: false });
 
     const rows = (postData ?? []) as Omit<HomePost, "author">[];
     const authorIds = Array.from(new Set(rows.map((post) => post.author_id)));
