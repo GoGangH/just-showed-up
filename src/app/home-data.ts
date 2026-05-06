@@ -30,7 +30,13 @@ export type HomeGroup = HomeGroupBase & {
 
 export type HomePost = Pick<
   Database["public"]["Tables"]["weekly_posts"]["Row"],
-  "id" | "title" | "body_markdown" | "feedback_question" | "created_at" | "author_id"
+  | "id"
+  | "title"
+  | "body_markdown"
+  | "feedback_question"
+  | "created_at"
+  | "author_id"
+  | "week_start"
 > & {
   author: {
     nickname: string;
@@ -68,7 +74,7 @@ export type HomeData =
       error: string | null;
     };
 
-export async function getHomeData(): Promise<HomeData> {
+export async function getHomeData(activeGroupId?: string): Promise<HomeData> {
   if (!hasSupabaseConfig()) {
     return {
       configured: false,
@@ -174,7 +180,8 @@ export async function getHomeData(): Promise<HomeData> {
     }));
   }
 
-  const activeGroup = groups[0] ?? null;
+  const activeGroup =
+    groups.find((group) => group.id === activeGroupId) ?? groups[0] ?? null;
   let posts: HomePost[] = [];
   let postError: string | null = null;
 
@@ -182,7 +189,7 @@ export async function getHomeData(): Promise<HomeData> {
     const { data: postData, error: weeklyPostError } = await supabase
       .from("weekly_posts")
       .select(
-        "id,title,body_markdown,feedback_question,created_at,author_id,post_links(id,url,title,site_name),anonymous_comments(id),anonymous_reactions(id)",
+        "id,title,body_markdown,feedback_question,created_at,author_id,week_start,post_links(id,url,title,site_name),anonymous_comments(id),anonymous_reactions(id)",
       )
       .eq("group_id", activeGroup.id)
       .order("created_at", { ascending: false })
