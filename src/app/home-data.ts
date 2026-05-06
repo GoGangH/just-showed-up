@@ -180,8 +180,9 @@ export async function getHomeData(activeGroupId?: string): Promise<HomeData> {
     }));
   }
 
-  const activeGroup =
-    groups.find((group) => group.id === activeGroupId) ?? groups[0] ?? null;
+  const activeGroup = activeGroupId
+    ? groups.find((group) => group.id === activeGroupId) ?? null
+    : null;
   let posts: HomePost[] = [];
   let postError: string | null = null;
 

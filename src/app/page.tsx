@@ -12,7 +12,7 @@ import { getRescheduleOverview } from "@/app/sessions/reschedule/data";
 import { RescheduleForm } from "@/app/sessions/reschedule/RescheduleForm";
 import { getHeaderNotifications } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
-import { CalendarDays, CheckCircle2, KeyRound, MessageCircle, Plus, UsersRound } from "lucide-react";
+import { CalendarDays, CheckCircle2, MessageCircle, Plus } from "lucide-react";
 import Link from "next/link";
 import { getHomeData } from "./home-data";
 
@@ -26,7 +26,7 @@ type HomeProps = {
 export default async function Home({ searchParams }: HomeProps) {
   const { group, modal } = await searchParams;
   const homeData = await getHomeData(group);
-  const activeGroup = homeData.groups.find((item) => item.id === group) ?? homeData.groups[0] ?? null;
+  const activeGroup = group ? homeData.groups.find((item) => item.id === group) ?? null : null;
   const isSignedIn = Boolean(homeData.user);
   const displayName =
     homeData.user?.name ?? homeData.user?.email?.split("@")[0] ?? "사용자";
@@ -99,25 +99,29 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
+      <div
+        className={`mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:px-8 ${
+          activeGroup ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""
+        }`}
+      >
           <div className="space-y-6">
             <section className="rounded-lg border border-neutral-200 bg-white p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-neutral-500">
-                    {homeData.user && activeGroup ? "그룹 홈" : homeData.user ? "대시보드" : "서비스 준비"}
+                    {homeData.user && activeGroup ? "그룹 홈" : homeData.user ? "내 스터디" : "서비스 준비"}
                   </p>
                   <h1 className="mt-2 text-3xl font-semibold tracking-normal">
                     {homeData.user && activeGroup
                       ? activeGroup.name
                       : homeData.user
-                        ? "내 스터디 현황"
+                        ? "스터디 목록"
                         : "쉬었음청년 스터디"}
                   </h1>
                   <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-600">
                     {homeData.user && activeGroup
                       ? "이 그룹의 모임 일정, 주차별 공유글, 멤버 작성 상태를 확인합니다."
-                      : "그룹별 모임 시간, 장소, 이번 주 작성 상태를 한 화면에서 확인합니다."}
+                      : "참여 중인 스터디를 선택하면 모임 일정과 주차별 기록을 볼 수 있습니다."}
                   </p>
                 </div>
               </div>
@@ -139,7 +143,7 @@ export default async function Home({ searchParams }: HomeProps) {
               </section>
             ) : null}
 
-            {homeData.user && !activeGroup ? (
+            {homeData.user && homeData.groups.length === 0 ? (
               <section className="rounded-lg border border-neutral-200 bg-white p-5">
                 <h2 className="text-xl font-semibold">아직 참여한 그룹이 없습니다</h2>
                 <p className="mt-2 text-sm leading-6 text-neutral-600">
@@ -170,27 +174,6 @@ export default async function Home({ searchParams }: HomeProps) {
 
             {activeGroup ? (
               <>
-                <section className="rounded-lg border border-neutral-200 bg-white p-5">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-neutral-500">그룹 정보</p>
-                      <h2 className="mt-1 text-xl font-semibold">{activeGroup.name}</h2>
-                      <p className="mt-2 inline-flex items-center gap-2 text-sm text-neutral-600">
-                        <UsersRound size={16} />
-                        {activeGroup.members.length}명 참여 중
-                      </p>
-                    </div>
-                    <div className="rounded-md border border-neutral-200 bg-neutral-50 px-4 py-3">
-                      <p className="inline-flex items-center gap-2 text-xs font-semibold text-neutral-500">
-                        <KeyRound size={14} />
-                        초대 코드
-                      </p>
-                      <p className="mt-2 font-mono text-sm font-semibold text-neutral-900">
-                        {activeGroup.invite_code}
-                      </p>
-                    </div>
-                  </div>
-                </section>
                 <MeetingCard
                   availability={rescheduleOverview.availability}
                   canManageSchedule={activeGroup.currentUserRole === "owner"}
@@ -203,6 +186,7 @@ export default async function Home({ searchParams }: HomeProps) {
             ) : null}
           </div>
 
+          {activeGroup ? (
           <aside className="space-y-4">
             <section className="rounded-lg border border-neutral-200 bg-white p-5">
               <p className="text-sm font-semibold text-neutral-500">이번 주 현황</p>
@@ -239,6 +223,7 @@ export default async function Home({ searchParams }: HomeProps) {
               </p>
             </section>
           </aside>
+          ) : null}
       </div>
 
       {modal === "login" ? (
