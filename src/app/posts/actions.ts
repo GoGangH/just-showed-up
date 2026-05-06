@@ -174,6 +174,84 @@ export async function createAnonymousCommentAction(
   return {};
 }
 
+export async function updateWeeklyPostAction(
+  _: PostFormState,
+  formData: FormData,
+): Promise<PostFormState> {
+  if (!hasSupabaseConfig()) {
+    return { error: "Supabase 환경변수를 먼저 설정해주세요." };
+  }
+
+  const postId = String(formData.get("post_id") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const bodyMarkdown = String(formData.get("body_markdown") ?? "").trim();
+  const feedbackQuestion = String(formData.get("feedback_question") ?? "").trim();
+  const links = collectLinks(formData);
+
+  if (!postId) {
+    return { error: "공유글 정보가 필요합니다." };
+  }
+
+  if (title.length < 2) {
+    return { error: "제목은 2자 이상 입력해주세요." };
+  }
+
+  if (bodyMarkdown.length < 10) {
+    return { error: "본문은 10자 이상 입력해주세요." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const { error } = await supabase
+    .from("weekly_posts")
+    .update({
+      body_markdown: bodyMarkdown,
+      feedback_question: feedbackQuestion || null,
+      title,
+      updated_at: new Date().toISOString(),
+    } as never)
+    .eq("id", postId)
+    .eq("author_id", user.id);
+
+  if (error) {
+    return { error: "공유글을 수정하지 못했습니다. 작성자 권한을 확인해주세요." };
+  }
+
+  const { error: deleteLinkError } = await supabase.from("post_links").delete().eq("post_id", postId);
+
+  if (deleteLinkError) {
+    return { error: "공유글은 수정되었지만 기존 링크를 정리하지 못했습니다." };
+  }
+
+  if (links.length > 0) {
+    const previews = await Promise.all(links.map((link) => fetchLinkPreview(link)));
+    const linkPayloads: PostLinkInsert[] = previews.map((preview) => ({
+      post_id: postId,
+      url: preview.url,
+      title: preview.title,
+      description: preview.description,
+      image_url: preview.imageUrl,
+      site_name: preview.siteName,
+    }));
+
+    const { error: linkError } = await supabase.from("post_links").insert(linkPayloads as never);
+
+    if (linkError) {
+      return { error: "공유글은 수정되었지만 링크 미리보기를 저장하지 못했습니다." };
+    }
+  }
+
+  revalidatePath(`/posts/${postId}`);
+  redirect(`/posts/${postId}`);
+}
+
 export async function createAnonymousReactionAction(formData: FormData) {
   if (!hasSupabaseConfig()) {
     return;

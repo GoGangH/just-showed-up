@@ -36,7 +36,7 @@ export default async function Home({ searchParams }: HomeProps) {
   const rescheduleOverview =
     homeData.user && activeGroup
       ? await getRescheduleOverview(activeGroup.id)
-      : { availability: [], responderCount: 0 };
+      : { availability: [], reason: null, responderCount: 0, status: "none" as const };
   const selectedWeek = week ?? getCurrentWeekStart();
 
   return (
@@ -157,10 +157,10 @@ export default async function Home({ searchParams }: HomeProps) {
 
             {activeGroup ? (
               <GroupWorkspace
-                availability={rescheduleOverview.availability}
+                currentUserId={homeData.user?.id ?? null}
                 group={activeGroup}
                 posts={homeData.posts}
-                responderCount={rescheduleOverview.responderCount}
+                rescheduleOverview={rescheduleOverview}
                 selectedWeek={selectedWeek}
               />
             ) : (

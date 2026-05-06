@@ -10,28 +10,38 @@ export type AvailabilitySummary = {
 
 export type RescheduleOverview = {
   availability: AvailabilitySummary[];
+  reason: string | null;
   responderCount: number;
+  status: "none" | "scheduled" | "rescheduling" | "confirmed" | "cancelled" | "completed";
 };
 
 export async function getRescheduleOverview(groupId: string): Promise<RescheduleOverview> {
-  if (!hasSupabaseConfig()) return { availability: [], responderCount: 0 };
+  if (!hasSupabaseConfig()) {
+    return { availability: [], reason: null, responderCount: 0, status: "none" };
+  }
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return { availability: [], responderCount: 0 };
+  if (!user) return { availability: [], reason: null, responderCount: 0, status: "none" };
 
   const { data: sessionData } = await supabase
     .from("study_sessions")
-    .select("id")
+    .select("id,status,reschedule_reason")
     .eq("group_id", groupId)
     .eq("week_start", getCurrentWeekStart())
     .maybeSingle();
 
-  const session = sessionData as { id: string } | null;
-  if (!session) return { availability: [], responderCount: 0 };
+  const session = sessionData as {
+    id: string;
+    reschedule_reason: string | null;
+    status: RescheduleOverview["status"];
+  } | null;
+  if (!session) {
+    return { availability: [], reason: null, responderCount: 0, status: "none" };
+  }
 
   const { data: slotRows } = await supabase
     .from("session_time_slots")
@@ -40,7 +50,14 @@ export async function getRescheduleOverview(groupId: string): Promise<Reschedule
     .order("starts_at", { ascending: true });
 
   const slots = (slotRows ?? []) as { id: string; starts_at: string }[];
-  if (slots.length === 0) return { availability: [], responderCount: 0 };
+  if (slots.length === 0) {
+    return {
+      availability: [],
+      reason: session.reschedule_reason,
+      responderCount: 0,
+      status: session.status,
+    };
+  }
 
   const slotIds = slots.map((slot) => slot.id);
   const { data: availabilityRows } = await supabase
@@ -67,7 +84,9 @@ export async function getRescheduleOverview(groupId: string): Promise<Reschedule
       count: counts.get(slot.id) ?? 0,
       selectedByMe: mySlots.has(slot.id),
     })),
+    reason: session.reschedule_reason,
     responderCount: responders.size,
+    status: session.status,
   };
 }
 
