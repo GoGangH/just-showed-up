@@ -44,6 +44,63 @@ function formatWeekLabel(weekStart: string) {
   return `${date.getMonth() + 1}월 ${date.getDate()}일 주`;
 }
 
+function getCurrentWeekStart(date = new Date()) {
+  const result = new Date(date);
+  const day = result.getDay();
+
+  result.setDate(result.getDate() - day);
+  result.setHours(12, 0, 0, 0);
+
+  const year = result.getFullYear();
+  const month = String(result.getMonth() + 1).padStart(2, "0");
+  const dayOfMonth = String(result.getDate()).padStart(2, "0");
+  return `${year}-${month}-${dayOfMonth}`;
+}
+
+function getWeekOfMonth(date: Date) {
+  return Math.floor((date.getDate() - 1) / 7) + 1;
+}
+
+function formatWeekHeading(weekStart: string) {
+  const date = new Date(`${weekStart}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "주차 미정";
+
+  const prefix = weekStart === getCurrentWeekStart() ? "이번 주 " : "";
+  return `${prefix}${date.getMonth() + 1}월 ${getWeekOfMonth(date)}주차(${date.getDate()}일)`;
+}
+
+function getNextMeetingDate(group: HomeGroup) {
+  if (group.default_meeting_day === null || !group.default_meeting_time) {
+    return null;
+  }
+
+  const [hour, minute] = group.default_meeting_time.split(":").map(Number);
+  const now = new Date();
+  const meeting = new Date(now);
+  const diff = (group.default_meeting_day - now.getDay() + 7) % 7;
+  meeting.setDate(now.getDate() + diff);
+  meeting.setHours(hour || 0, minute || 0, 0, 0);
+
+  if (meeting <= now) {
+    meeting.setDate(meeting.getDate() + 7);
+  }
+
+  return meeting;
+}
+
+function formatRemainingMeeting(group: HomeGroup) {
+  const meeting = getNextMeetingDate(group);
+  if (!meeting) return "모임까지 남은 시간 미정";
+
+  const totalHours = Math.max(0, Math.ceil((meeting.getTime() - Date.now()) / (1000 * 60 * 60)));
+  const days = Math.floor(totalHours / 24);
+  const hours = totalHours % 24;
+
+  if (days === 0) return `모임까지 ${hours}시간`;
+  if (hours === 0) return `모임까지 ${days}일`;
+  return `모임까지 ${days}일 ${hours}시간`;
+}
+
 function getExcerpt(markdown: string) {
   return markdown
     .replace(/[#>*_`-]/g, "")
@@ -56,12 +113,6 @@ function getExcerpt(markdown: string) {
 
 function getInitial(name: string) {
   return name.trim().slice(0, 1).toUpperCase() || "?";
-}
-
-function getWeekOptions(posts: HomePost[], selectedWeek: string) {
-  return Array.from(new Set([selectedWeek, ...posts.map((post) => post.week_start)])).sort(
-    (a, b) => new Date(b).getTime() - new Date(a).getTime(),
-  );
 }
 
 function addWeeks(weekStart: string, amount: number) {
@@ -90,7 +141,6 @@ export function GroupWorkspace({
   rescheduleOverview: RescheduleOverview;
   selectedWeek: string;
 }) {
-  const weekOptions = getWeekOptions(posts, selectedWeek);
   const postsForWeek = posts.filter((post) => post.week_start === selectedWeek);
   const postsByAuthor = new Map(postsForWeek.map((post) => [post.author_id, post]));
   const availability = rescheduleOverview?.availability ?? [];
@@ -115,7 +165,9 @@ export function GroupWorkspace({
       <div className="rounded-md bg-neutral-50 p-3">
         <p className="text-xs font-semibold text-neutral-500">모임</p>
         <p className="mt-1 text-sm font-semibold text-neutral-900">{formatMeeting(group)}</p>
-        <p className="mt-1 text-xs text-neutral-500">{formatLocation(group)}</p>
+        <p className="mt-1 text-xs text-neutral-500">
+          {formatRemainingMeeting(group)} · {formatLocation(group)}
+        </p>
       </div>
       <div className="rounded-md bg-neutral-50 p-3">
         <p className="text-xs font-semibold text-neutral-500">일정 응답</p>
@@ -175,6 +227,9 @@ export function GroupWorkspace({
               <span className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-3 py-1.5">
                 <CalendarClock size={15} />
                 {formatMeeting(group)}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-3 py-1.5">
+                {formatRemainingMeeting(group)}
               </span>
               <span className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-3 py-1.5">
                 <MapPin size={15} />
@@ -241,35 +296,24 @@ export function GroupWorkspace({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-neutral-500">주차</p>
-            <h2 className="mt-1 text-xl font-semibold">{formatWeekLabel(selectedWeek)}</h2>
+            <h2 className="mt-1 text-xl font-semibold">{formatWeekHeading(selectedWeek)}</h2>
           </div>
-          <div className="flex flex-wrap gap-2 pb-1">
+          <div className="flex items-center gap-2 pb-1">
             <Link
-              className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-400"
+              aria-label="이전 주"
+              className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
               href={`/?group=${group.id}&week=${previousWeek}`}
             >
               <ChevronLeft size={15} />
-              이전 주
             </Link>
-            {weekOptions.map((week) => (
-              <Link
-                className={`shrink-0 rounded-md border px-3 py-2 text-sm font-semibold ${
-                  week === selectedWeek
-                    ? "border-neutral-900 bg-neutral-900 text-white"
-                    : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
-                }`}
-                href={`/?group=${group.id}&week=${week}`}
-                key={week}
-              >
-                {week === selectedWeek ? "선택됨 · " : ""}
-                {formatWeekLabel(week)}
-              </Link>
-            ))}
+            <div className="min-w-44 rounded-md border border-neutral-200 bg-white px-4 py-2 text-center text-sm font-semibold text-neutral-900">
+              {formatWeekHeading(selectedWeek)}
+            </div>
             <Link
-              className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-400"
+              aria-label="다음 주"
+              className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
               href={`/?group=${group.id}&week=${nextWeek}`}
             >
-              다음 주
               <ChevronRight size={15} />
             </Link>
           </div>
