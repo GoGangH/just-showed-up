@@ -2,6 +2,7 @@ import { AppModal } from "@/components/AppModal";
 import { FeedPreview } from "@/components/FeedPreview";
 import { GroupList } from "@/components/GroupList";
 import { MeetingCard } from "@/components/MeetingCard";
+import { NotificationBell } from "@/components/NotificationBell";
 import { PostComposer } from "@/components/PostComposer";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { GroupJoinForm } from "@/app/groups/join/GroupJoinForm";
@@ -9,6 +10,8 @@ import { GroupCreateForm } from "@/app/groups/new/GroupCreateForm";
 import { LoginForm } from "@/app/login/LoginForm";
 import { getRescheduleOverview } from "@/app/sessions/reschedule/data";
 import { RescheduleForm } from "@/app/sessions/reschedule/RescheduleForm";
+import { getHeaderNotifications } from "@/lib/notifications";
+import { createClient } from "@/lib/supabase/server";
 import { CalendarDays, CheckCircle2, MessageCircle, Plus } from "lucide-react";
 import Link from "next/link";
 import { getHomeData } from "./home-data";
@@ -27,6 +30,9 @@ export default async function Home({ searchParams }: HomeProps) {
   const isSignedIn = Boolean(homeData.user);
   const displayName =
     homeData.user?.name ?? homeData.user?.email?.split("@")[0] ?? "사용자";
+  const notificationData = homeData.user
+    ? await getHeaderNotifications(await createClient())
+    : { notifications: [], unreadCount: 0 };
   const rescheduleOverview =
     homeData.user && activeGroup
       ? await getRescheduleOverview(activeGroup.id)
@@ -61,6 +67,10 @@ export default async function Home({ searchParams }: HomeProps) {
                 >
                   초대 참여
                 </Link>
+                <NotificationBell
+                  notifications={notificationData.notifications}
+                  unreadCount={notificationData.unreadCount}
+                />
                 <ProfileMenu
                   avatarUrl={homeData.user.avatarUrl}
                   displayName={displayName}
@@ -156,6 +166,7 @@ export default async function Home({ searchParams }: HomeProps) {
               <>
                 <MeetingCard
                   availability={rescheduleOverview.availability}
+                  canManageSchedule={activeGroup.currentUserRole === "owner"}
                   group={activeGroup}
                   responderCount={rescheduleOverview.responderCount}
                 />

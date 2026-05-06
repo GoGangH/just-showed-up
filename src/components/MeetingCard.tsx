@@ -1,4 +1,5 @@
 import { CalendarClock, MapPin, RotateCcw, UsersRound } from "lucide-react";
+import { confirmRescheduleAction } from "@/app/sessions/actions";
 import type { HomeGroup } from "@/app/home-data";
 import type { AvailabilitySummary } from "@/app/sessions/reschedule/data";
 import Link from "next/link";
@@ -49,10 +50,12 @@ function getTopSlots(availability: AvailabilitySummary[]) {
 
 export function MeetingCard({
   availability,
+  canManageSchedule,
   group,
   responderCount,
 }: {
   availability: AvailabilitySummary[];
+  canManageSchedule: boolean;
   group: HomeGroup;
   responderCount: number;
 }) {
@@ -125,6 +128,15 @@ export function MeetingCard({
             아직 등록된 후보 시간이 없습니다.
           </p>
         )}
+        {canManageSchedule && topSlots.length > 0 ? (
+          <form action={confirmRescheduleAction} className="mt-4">
+            <input name="group_id" type="hidden" value={group.id} />
+            <input name="starts_at" type="hidden" value={topSlots[0].startsAt} />
+            <button className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800">
+              최다 응답 시간으로 확정
+            </button>
+          </form>
+        ) : null}
       </div>
     </section>
   );

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { getCurrentWeekStart } from "@/lib/dates/week";
+import { notifyGroupMembers } from "@/lib/notifications";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type SessionFormState = {
@@ -158,6 +159,93 @@ export async function startRescheduleAction(
   if (availabilityError) {
     return { error: "가능 시간을 저장하지 못했습니다." };
   }
+
+  await notifyGroupMembers(supabase, {
+    actorId: user.id,
+    body: "이번 주 가능한 시간을 선택해주세요.",
+    excludeUserIds: [user.id],
+    groupId,
+    href: `/?group=${groupId}&modal=reschedule`,
+    title: "일정 재조율 응답이 필요합니다",
+    type: "reschedule_vote_needed",
+  });
+
+  redirect(`/?group=${groupId}`);
+}
+
+export async function confirmRescheduleAction(formData: FormData) {
+  if (!hasSupabaseConfig()) {
+    return;
+  }
+
+  const groupId = String(formData.get("group_id") ?? "").trim();
+  const startsAtValue = String(formData.get("starts_at") ?? "").trim();
+  const startsAt = new Date(startsAtValue);
+
+  if (!groupId || Number.isNaN(startsAt.getTime())) {
+    return;
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return;
+  }
+
+  const { data: membershipData } = await supabase
+    .from("group_members")
+    .select("role")
+    .eq("group_id", groupId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const membership = membershipData as { role: "owner" | "member" } | null;
+
+  if (membership?.role !== "owner") {
+    return;
+  }
+
+  const { data: sessionData } = await supabase
+    .from("study_sessions")
+    .select("id")
+    .eq("group_id", groupId)
+    .eq("week_start", getCurrentWeekStart())
+    .maybeSingle();
+  const session = sessionData as { id: string } | null;
+
+  if (!session) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("study_sessions")
+    .update({
+      scheduled_at: startsAt.toISOString(),
+      status: "confirmed",
+    } as never)
+    .eq("id", session.id);
+
+  if (error) {
+    return;
+  }
+
+  await notifyGroupMembers(supabase, {
+    actorId: user.id,
+    body: startsAt.toLocaleString("ko-KR", {
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      month: "long",
+      weekday: "short",
+    }),
+    excludeUserIds: [user.id],
+    groupId,
+    href: `/?group=${groupId}`,
+    title: "이번 주 일정이 확정되었습니다",
+    type: "schedule_confirmed",
+  });
 
   redirect(`/?group=${groupId}`);
 }

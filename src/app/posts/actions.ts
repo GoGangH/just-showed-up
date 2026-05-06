@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { getCurrentWeekStart } from "@/lib/dates/week";
 import { fetchLinkPreview } from "@/lib/link-preview/metadata";
+import { notifyGroupMembers, notifyUser } from "@/lib/notifications";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type PostFormState = {
@@ -99,6 +100,16 @@ export async function createWeeklyPostAction(
     }
   }
 
+  await notifyGroupMembers(supabase, {
+    actorId: user.id,
+    body: title,
+    excludeUserIds: [user.id],
+    groupId,
+    href: `/posts/${post.id}`,
+    title: "새 공유글이 올라왔습니다",
+    type: "weekly_post_created",
+  });
+
   redirect(`/posts/${post.id}`);
 }
 
@@ -122,6 +133,9 @@ export async function createAnonymousCommentAction(
   }
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const payload: AnonymousCommentInsert = {
     post_id: postId,
     body,
@@ -130,6 +144,30 @@ export async function createAnonymousCommentAction(
 
   if (error) {
     return { error: "댓글을 저장하지 못했습니다. 그룹 권한과 DB 설정을 확인해주세요." };
+  }
+
+  const { data: postData } = await supabase
+    .from("weekly_posts")
+    .select("id,group_id,author_id,title")
+    .eq("id", postId)
+    .single();
+  const post = postData as {
+    author_id: string;
+    group_id: string;
+    id: string;
+    title: string;
+  } | null;
+
+  if (post && post.author_id !== user?.id) {
+    await notifyUser(supabase, {
+      actor_id: null,
+      body: post.title,
+      group_id: post.group_id,
+      href: `/posts/${post.id}`,
+      title: "내 글에 익명 댓글이 달렸습니다",
+      type: "anonymous_comment_created",
+      user_id: post.author_id,
+    });
   }
 
   revalidatePath(`/posts/${postId}`);

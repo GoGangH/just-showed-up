@@ -7,6 +7,7 @@ export type HomeMember = {
   userId: string;
   nickname: string;
   postedThisWeek: boolean;
+  role: "owner" | "member";
 };
 
 export type HomeGroupBase = Pick<
@@ -23,6 +24,7 @@ export type HomeGroupBase = Pick<
 >;
 
 export type HomeGroup = HomeGroupBase & {
+  currentUserRole: "owner" | "member" | null;
   members: HomeMember[];
 };
 
@@ -113,15 +115,23 @@ export async function getHomeData(): Promise<HomeData> {
 
   const groupBases = (data ?? []) as HomeGroupBase[];
   const groupIds = groupBases.map((group) => group.id);
-  let groups: HomeGroup[] = groupBases.map((group) => ({ ...group, members: [] }));
+  let groups: HomeGroup[] = groupBases.map((group) => ({
+    ...group,
+    currentUserRole: null,
+    members: [],
+  }));
 
   if (groupIds.length > 0) {
     const { data: memberRows } = await supabase
       .from("group_members")
-      .select("group_id,user_id")
+      .select("group_id,user_id,role")
       .in("group_id", groupIds);
 
-    const members = (memberRows ?? []) as { group_id: string; user_id: string }[];
+    const members = (memberRows ?? []) as {
+      group_id: string;
+      role: "owner" | "member";
+      user_id: string;
+    }[];
     const userIds = Array.from(new Set(members.map((member) => member.user_id)));
 
     const { data: profileRows } =
@@ -150,12 +160,16 @@ export async function getHomeData(): Promise<HomeData> {
 
     groups = groupBases.map((group) => ({
       ...group,
+      currentUserRole:
+        members.find((member) => member.group_id === group.id && member.user_id === user.id)?.role ??
+        null,
       members: members
         .filter((member) => member.group_id === group.id)
         .map((member) => ({
           userId: member.user_id,
           nickname: profiles.get(member.user_id) ?? "멤버",
           postedThisWeek: postedKeys.has(`${group.id}:${member.user_id}`),
+          role: member.role,
         })),
     }));
   }

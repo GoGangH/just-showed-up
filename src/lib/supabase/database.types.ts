@@ -210,6 +210,41 @@ export type Database = {
         };
         Update: never;
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          group_id: string | null;
+          actor_id: string | null;
+          type:
+            | "weekly_post_created"
+            | "anonymous_comment_created"
+            | "reschedule_vote_needed"
+            | "schedule_confirmed";
+          title: string;
+          body: string | null;
+          href: string;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          group_id?: string | null;
+          actor_id?: string | null;
+          type:
+            | "weekly_post_created"
+            | "anonymous_comment_created"
+            | "reschedule_vote_needed"
+            | "schedule_confirmed";
+          title: string;
+          body?: string | null;
+          href: string;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["notifications"]["Row"]>;
+      };
     };
     Views: Record<string, never>;
     Functions: {
