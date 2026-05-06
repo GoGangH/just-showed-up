@@ -4,9 +4,10 @@ import Link from "next/link";
 type ProfileMenuProps = {
   avatarUrl: string | null;
   displayName: string;
+  profileHref: "/" | "/?modal=profile" | `/?group=${string}&modal=profile`;
 };
 
-export function ProfileMenu({ avatarUrl, displayName }: ProfileMenuProps) {
+export function ProfileMenu({ avatarUrl, displayName, profileHref }: ProfileMenuProps) {
   const initial = displayName.trim().slice(0, 1).toUpperCase() || "?";
 
   return (
@@ -33,7 +34,7 @@ export function ProfileMenu({ avatarUrl, displayName }: ProfileMenuProps) {
       <div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-md border border-neutral-200 bg-white p-1 shadow-lg">
         <Link
           className="flex items-center gap-2 rounded px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-          href="/?modal=profile"
+          href={profileHref}
         >
           <UserRound size={16} />
           내 정보

@@ -61,7 +61,15 @@ export default async function Home({ searchParams }: HomeProps) {
                 >
                   초대 참여
                 </Link>
-                <ProfileMenu avatarUrl={homeData.user.avatarUrl} displayName={displayName} />
+                <ProfileMenu
+                  avatarUrl={homeData.user.avatarUrl}
+                  displayName={displayName}
+                  profileHref={
+                    activeGroup
+                      ? `/?group=${activeGroup.id}&modal=profile`
+                      : "/?modal=profile"
+                  }
+                />
               </>
             ) : (
               <>
