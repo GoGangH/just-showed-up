@@ -11,6 +11,9 @@ type PageProps = {
   params: Promise<{
     postId: string;
   }>;
+  searchParams: Promise<{
+    from?: string;
+  }>;
 };
 
 type PostDetail = Database["public"]["Tables"]["weekly_posts"]["Row"] & {
@@ -30,8 +33,17 @@ function countReactions(post: PostDetail) {
   }, {});
 }
 
-export default async function PostDetailPage({ params }: PageProps) {
+function safeInternalHref(value: string | null | undefined) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return null;
+  }
+
+  return value;
+}
+
+export default async function PostDetailPage({ params, searchParams }: PageProps) {
   const { postId } = await params;
+  const { from } = await searchParams;
 
   if (!hasSupabaseConfig()) {
     return (
@@ -68,12 +80,13 @@ export default async function PostDetailPage({ params }: PageProps) {
     author,
   };
   const reactionCounts = countReactions(post);
+  const backHref = safeInternalHref(from) ?? `/?group=${post.group_id}&week=${post.week_start}`;
 
   return (
     <main className="min-h-screen px-4 py-8">
       <div className="mx-auto max-w-4xl space-y-5">
-        <Link className="text-sm font-semibold text-neutral-500 hover:text-neutral-900" href="/">
-          홈으로 돌아가기
+        <Link className="text-sm font-semibold text-neutral-500 hover:text-neutral-900" href={backHref as never}>
+          이전으로
         </Link>
 
         <article className="rounded-lg border border-neutral-200 bg-white p-6">
