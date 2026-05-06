@@ -389,7 +389,7 @@ export function GroupWorkspace({
                         {post ? "이번 주 등록 완료" : "이번 주 등록글 없음"}
                       </p>
                       <p className="mt-1 text-xs font-semibold text-neutral-500">
-                        미참여 {member.missedCount}회
+                        누적 미참여 {member.missedCount}회
                       </p>
                     </div>
                   </div>
