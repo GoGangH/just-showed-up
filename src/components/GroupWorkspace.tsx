@@ -128,6 +128,16 @@ function addWeeks(weekStart: string, amount: number) {
   return `${nextYear}-${nextMonth}-${nextDay}`;
 }
 
+function getStudyStartWeek(group: HomeGroup) {
+  return getCurrentWeekStart(new Date(group.created_at));
+}
+
+function clampWeek(weekStart: string, minWeek: string, maxWeek: string) {
+  if (weekStart < minWeek) return minWeek;
+  if (weekStart > maxWeek) return maxWeek;
+  return weekStart;
+}
+
 export function GroupWorkspace({
   currentUserId,
   group,
@@ -141,7 +151,10 @@ export function GroupWorkspace({
   rescheduleOverview: RescheduleOverview;
   selectedWeek: string;
 }) {
-  const postsForWeek = posts.filter((post) => post.week_start === selectedWeek);
+  const studyStartWeek = getStudyStartWeek(group);
+  const currentWeek = getCurrentWeekStart();
+  const visibleWeek = clampWeek(selectedWeek, studyStartWeek, currentWeek);
+  const postsForWeek = posts.filter((post) => post.week_start === visibleWeek);
   const postsByAuthor = new Map(postsForWeek.map((post) => [post.author_id, post]));
   const availability = rescheduleOverview?.availability ?? [];
   const hasVoted = availability.some((slot) => slot.selectedByMe);
@@ -157,9 +170,11 @@ export function GroupWorkspace({
     (sum, post) => sum + post.anonymous_reactions.length,
     0,
   );
-  const groupWeekHref = `/?group=${group.id}&week=${selectedWeek}`;
-  const previousWeek = addWeeks(selectedWeek, -1);
-  const nextWeek = addWeeks(selectedWeek, 1);
+  const groupWeekHref = `/?group=${group.id}&week=${visibleWeek}`;
+  const previousWeek = addWeeks(visibleWeek, -1);
+  const nextWeek = addWeeks(visibleWeek, 1);
+  const canGoPrevious = visibleWeek > studyStartWeek;
+  const canGoNext = visibleWeek < currentWeek;
   const detailsGrid = (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <div className="rounded-md bg-neutral-50 p-3">
@@ -191,7 +206,7 @@ export function GroupWorkspace({
         <p className="mt-1 text-sm font-semibold text-neutral-900">
           {postsForWeek.length}/{group.members.length}명
         </p>
-        <p className="mt-1 text-xs text-neutral-500">{formatWeekLabel(selectedWeek)} 기준</p>
+        <p className="mt-1 text-xs text-neutral-500">{formatWeekLabel(visibleWeek)} 기준</p>
       </div>
       <div className="rounded-md bg-neutral-50 p-3">
         <p className="text-xs font-semibold text-neutral-500">피드백</p>
@@ -296,26 +311,44 @@ export function GroupWorkspace({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-neutral-500">주차</p>
-            <h2 className="mt-1 text-xl font-semibold">{formatWeekHeading(selectedWeek)}</h2>
+            <h2 className="mt-1 text-xl font-semibold">{formatWeekHeading(visibleWeek)}</h2>
           </div>
           <div className="flex items-center gap-2 pb-1">
-            <Link
-              aria-label="이전 주"
-              className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
-              href={`/?group=${group.id}&week=${previousWeek}`}
-            >
-              <ChevronLeft size={15} />
-            </Link>
+            {canGoPrevious ? (
+              <Link
+                aria-label="이전 주"
+                className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
+                href={`/?group=${group.id}&week=${previousWeek}`}
+              >
+                <ChevronLeft size={15} />
+              </Link>
+            ) : (
+              <span
+                aria-label="이전 주 없음"
+                className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-neutral-50 text-neutral-300"
+              >
+                <ChevronLeft size={15} />
+              </span>
+            )}
             <div className="min-w-44 rounded-md border border-neutral-200 bg-white px-4 py-2 text-center text-sm font-semibold text-neutral-900">
-              {formatWeekHeading(selectedWeek)}
+              {formatWeekHeading(visibleWeek)}
             </div>
-            <Link
-              aria-label="다음 주"
-              className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
-              href={`/?group=${group.id}&week=${nextWeek}`}
-            >
-              <ChevronRight size={15} />
-            </Link>
+            {canGoNext ? (
+              <Link
+                aria-label="다음 주"
+                className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
+                href={`/?group=${group.id}&week=${nextWeek}`}
+              >
+                <ChevronRight size={15} />
+              </Link>
+            ) : (
+              <span
+                aria-label="다음 주 없음"
+                className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-neutral-50 text-neutral-300"
+              >
+                <ChevronRight size={15} />
+              </span>
+            )}
           </div>
         </div>
 
@@ -354,6 +387,9 @@ export function GroupWorkspace({
                       <p className="font-semibold text-neutral-900">{member.nickname}</p>
                       <p className="mt-1 text-sm text-neutral-500">
                         {post ? "이번 주 등록 완료" : "이번 주 등록글 없음"}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-neutral-500">
+                        미참여 {member.missedCount}회
                       </p>
                     </div>
                   </div>

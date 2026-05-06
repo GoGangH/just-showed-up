@@ -4,6 +4,7 @@ import { getCurrentWeekStart } from "@/lib/dates/week";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type HomeMember = {
+  missedCount: number;
   userId: string;
   nickname: string;
   postedThisWeek: boolean;
@@ -21,6 +22,7 @@ export type HomeGroupBase = Pick<
   | "default_location_name"
   | "default_location_url"
   | "default_location_note"
+  | "created_at"
 >;
 
 export type HomeGroup = HomeGroupBase & {
@@ -115,7 +117,7 @@ export async function getHomeData(activeGroupId?: string): Promise<HomeData> {
   const { data, error } = await supabase
     .from("groups")
     .select(
-      "id,name,invite_code,default_meeting_day,default_meeting_time,default_location_type,default_location_name,default_location_url,default_location_note",
+      "id,name,invite_code,default_meeting_day,default_meeting_time,default_location_type,default_location_name,default_location_url,default_location_note,created_at",
     )
     .order("created_at", { ascending: true });
 
@@ -154,15 +156,40 @@ export async function getHomeData(activeGroupId?: string): Promise<HomeData> {
 
     const { data: weeklyPostRows } = await supabase
       .from("weekly_posts")
-      .select("group_id,author_id")
-      .in("group_id", groupIds)
-      .eq("week_start", getCurrentWeekStart());
+      .select("group_id,author_id,week_start")
+      .in("group_id", groupIds);
+
+    const currentWeekStart = getCurrentWeekStart();
 
     const postedKeys = new Set(
-      ((weeklyPostRows ?? []) as { group_id: string; author_id: string }[]).map(
+      ((weeklyPostRows ?? []) as { group_id: string; author_id: string; week_start: string }[])
+        .filter((post) => post.week_start === currentWeekStart)
+        .map(
         (post) => `${post.group_id}:${post.author_id}`,
       ),
     );
+    const postedWeekKeys = new Set(
+      ((weeklyPostRows ?? []) as { group_id: string; author_id: string; week_start: string }[]).map(
+        (post) => `${post.group_id}:${post.author_id}:${post.week_start}`,
+      ),
+    );
+
+    function getWeekStart(value: string) {
+      return getCurrentWeekStart(new Date(value));
+    }
+
+    function getWeeksBetween(startWeek: string, endWeek: string) {
+      const weeks: string[] = [];
+      const cursor = new Date(`${startWeek}T00:00:00`);
+      const end = new Date(`${endWeek}T00:00:00`);
+
+      while (cursor <= end) {
+        weeks.push(cursor.toISOString().slice(0, 10));
+        cursor.setDate(cursor.getDate() + 7);
+      }
+
+      return weeks;
+    }
 
     groups = groupBases.map((group) => ({
       ...group,
@@ -171,12 +198,20 @@ export async function getHomeData(activeGroupId?: string): Promise<HomeData> {
         null,
       members: members
         .filter((member) => member.group_id === group.id)
-        .map((member) => ({
-          userId: member.user_id,
-          nickname: profiles.get(member.user_id) ?? "멤버",
-          postedThisWeek: postedKeys.has(`${group.id}:${member.user_id}`),
-          role: member.role,
-        })),
+        .map((member) => {
+          const studyWeeks = getWeeksBetween(getWeekStart(group.created_at), currentWeekStart);
+          const missedCount = studyWeeks.filter(
+            (week) => !postedWeekKeys.has(`${group.id}:${member.user_id}:${week}`),
+          ).length;
+
+          return {
+            missedCount,
+            userId: member.user_id,
+            nickname: profiles.get(member.user_id) ?? "멤버",
+            postedThisWeek: postedKeys.has(`${group.id}:${member.user_id}`),
+            role: member.role,
+          };
+        }),
     }));
   }
 
