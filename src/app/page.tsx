@@ -31,6 +31,10 @@ export default async function Home({ searchParams }: HomeProps) {
     homeData.user && activeGroup
       ? await getRescheduleOverview(activeGroup.id)
       : { availability: [], responderCount: 0 };
+  const postCount = activeGroup ? homeData.posts.length : 0;
+  const anonymousCommentCount = activeGroup
+    ? homeData.posts.reduce((sum, post) => sum + post.anonymous_comments.length, 0)
+    : 0;
 
   return (
     <main className="min-h-screen">
@@ -162,7 +166,7 @@ export default async function Home({ searchParams }: HomeProps) {
                     <CheckCircle2 size={16} />
                     공유글
                   </span>
-                  <strong>{activeGroup ? "0" : "-"}</strong>
+                  <strong>{activeGroup ? postCount : "-"}</strong>
                 </div>
                 <div className="flex items-center justify-between rounded-md bg-neutral-50 p-3">
                   <span className="inline-flex items-center gap-2 text-sm font-semibold">
@@ -176,7 +180,7 @@ export default async function Home({ searchParams }: HomeProps) {
                     <MessageCircle size={16} />
                     익명 댓글
                   </span>
-                  <strong>{activeGroup ? "0" : "-"}</strong>
+                  <strong>{activeGroup ? anonymousCommentCount : "-"}</strong>
                 </div>
               </div>
             </section>

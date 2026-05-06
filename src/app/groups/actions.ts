@@ -51,6 +51,7 @@ export async function createGroupAction(
   }
 
   const payload: GroupInsert = {
+    id: crypto.randomUUID(),
     name,
     created_by: user.id,
     default_meeting_day: meetingDay,
@@ -61,19 +62,13 @@ export async function createGroupAction(
     default_location_note: optionalString(formData.get("default_location_note")),
   };
 
-  const { data, error } = await supabase
-    .from("groups")
-    .insert(payload as never)
-    .select("id")
-    .single();
+  const { error } = await supabase.from("groups").insert(payload as never);
 
-  const createdGroup = data as { id: string } | null;
-
-  if (error || !createdGroup) {
-    return { error: "그룹을 만들지 못했습니다. 잠시 후 다시 시도해주세요." };
+  if (error) {
+    return { error: "그룹을 만들지 못했습니다. 그룹 권한과 DB 설정을 확인해주세요." };
   }
 
-  redirect(`/?group=${createdGroup.id}`);
+  redirect(`/?group=${payload.id}`);
 }
 
 export async function joinGroupAction(

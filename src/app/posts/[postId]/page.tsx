@@ -47,7 +47,7 @@ export default async function PostDetailPage({ params }: PageProps) {
   const { data, error } = await supabase
     .from("weekly_posts")
     .select(
-      "*,author:profiles!weekly_posts_author_id_fkey(nickname),post_links(*),anonymous_comments(*),anonymous_reactions(id,reaction_type)",
+      "*,post_links(*),anonymous_comments(*),anonymous_reactions(id,reaction_type)",
     )
     .eq("id", postId)
     .single();
@@ -56,7 +56,17 @@ export default async function PostDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const post = data as PostDetail;
+  const postData = data as Omit<PostDetail, "author">;
+  const { data: authorData } = await supabase
+    .from("profiles")
+    .select("nickname")
+    .eq("id", postData.author_id)
+    .maybeSingle();
+  const author = authorData as { nickname: string } | null;
+  const post: PostDetail = {
+    ...postData,
+    author,
+  };
   const reactionCounts = countReactions(post);
 
   return (

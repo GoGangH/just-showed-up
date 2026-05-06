@@ -28,7 +28,7 @@ export type HomeGroup = HomeGroupBase & {
 
 export type HomePost = Pick<
   Database["public"]["Tables"]["weekly_posts"]["Row"],
-  "id" | "title" | "body_markdown" | "feedback_question" | "created_at"
+  "id" | "title" | "body_markdown" | "feedback_question" | "created_at" | "author_id"
 > & {
   author: {
     nickname: string;
@@ -39,6 +39,8 @@ export type HomePost = Pick<
     title: string | null;
     site_name: string | null;
   }[];
+  anonymous_comments: { id: string }[];
+  anonymous_reactions: { id: string }[];
 };
 
 export type HomeData =
@@ -90,6 +92,17 @@ export async function getHomeData(): Promise<HomeData> {
       error: null,
     };
   }
+
+  const profileName =
+    String(user.user_metadata.name ?? user.user_metadata.full_name ?? user.user_metadata.nickname ?? "")
+      .trim() ||
+    user.email?.split("@")[0] ||
+    "사용자";
+
+  await supabase.from("profiles").upsert({
+    id: user.id,
+    nickname: profileName.slice(0, 30),
+  } as never);
 
   const { data, error } = await supabase
     .from("groups")
@@ -155,14 +168,32 @@ export async function getHomeData(): Promise<HomeData> {
     const { data: postData, error: weeklyPostError } = await supabase
       .from("weekly_posts")
       .select(
-        "id,title,body_markdown,feedback_question,created_at,author:profiles!weekly_posts_author_id_fkey(nickname),post_links(id,url,title,site_name)",
+        "id,title,body_markdown,feedback_question,created_at,author_id,post_links(id,url,title,site_name),anonymous_comments(id),anonymous_reactions(id)",
       )
       .eq("group_id", activeGroup.id)
       .order("created_at", { ascending: false })
       .limit(10);
 
-    posts = (postData ?? []) as HomePost[];
-    postError = weeklyPostError ? "공유글 정보를 불러오지 못했습니다." : null;
+    const rows = (postData ?? []) as Omit<HomePost, "author">[];
+    const authorIds = Array.from(new Set(rows.map((post) => post.author_id)));
+    const { data: authorRows } =
+      authorIds.length > 0
+        ? await supabase.from("profiles").select("id,nickname").in("id", authorIds)
+        : { data: [] };
+    const authors = new Map(
+      ((authorRows ?? []) as { id: string; nickname: string }[]).map((author) => [
+        author.id,
+        author.nickname,
+      ]),
+    );
+
+    posts = rows.map((post) => ({
+      ...post,
+      author: { nickname: authors.get(post.author_id) ?? "작성자" },
+    }));
+    postError = weeklyPostError
+      ? `공유글 정보를 불러오지 못했습니다. ${weeklyPostError.message}`
+      : null;
   }
 
   return {
@@ -170,9 +201,7 @@ export async function getHomeData(): Promise<HomeData> {
     user: {
       id: user.id,
       email: user.email ?? null,
-      name:
-        String(user.user_metadata.name ?? user.user_metadata.full_name ?? user.user_metadata.nickname ?? "")
-          .trim() || null,
+      name: profileName,
       avatarUrl: String(user.user_metadata.avatar_url ?? user.user_metadata.picture ?? "").trim() || null,
     },
     groups,

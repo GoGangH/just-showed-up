@@ -59,11 +59,11 @@ export function FeedPreview({ posts }: { posts: HomePost[] }) {
           <div className="mt-4 flex flex-wrap gap-2 text-sm text-neutral-600">
             <span className="inline-flex items-center gap-1">
               <Sparkles size={15} />
-              익명 반응 0
+              익명 반응 {post.anonymous_reactions.length}
             </span>
             <span className="inline-flex items-center gap-1">
               <MessageCircle size={15} />
-              익명 댓글 0
+              익명 댓글 {post.anonymous_comments.length}
             </span>
           </div>
         </article>
