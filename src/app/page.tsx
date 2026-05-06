@@ -1,9 +1,7 @@
 import { AppModal } from "@/components/AppModal";
-import { FeedPreview } from "@/components/FeedPreview";
 import { GroupList } from "@/components/GroupList";
-import { MeetingCard } from "@/components/MeetingCard";
+import { GroupWorkspace } from "@/components/GroupWorkspace";
 import { NotificationBell } from "@/components/NotificationBell";
-import { PostComposer } from "@/components/PostComposer";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { GroupJoinForm } from "@/app/groups/join/GroupJoinForm";
 import { GroupCreateForm } from "@/app/groups/new/GroupCreateForm";
@@ -12,7 +10,8 @@ import { getRescheduleOverview } from "@/app/sessions/reschedule/data";
 import { RescheduleForm } from "@/app/sessions/reschedule/RescheduleForm";
 import { getHeaderNotifications } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
-import { CalendarDays, CheckCircle2, MessageCircle, Plus } from "lucide-react";
+import { getCurrentWeekStart } from "@/lib/dates/week";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { getHomeData } from "./home-data";
 
@@ -20,11 +19,12 @@ type HomeProps = {
   searchParams: Promise<{
     group?: string;
     modal?: string;
+    week?: string;
   }>;
 };
 
 export default async function Home({ searchParams }: HomeProps) {
-  const { group, modal } = await searchParams;
+  const { group, modal, week } = await searchParams;
   const homeData = await getHomeData(group);
   const activeGroup = group ? homeData.groups.find((item) => item.id === group) ?? null : null;
   const isSignedIn = Boolean(homeData.user);
@@ -37,10 +37,7 @@ export default async function Home({ searchParams }: HomeProps) {
     homeData.user && activeGroup
       ? await getRescheduleOverview(activeGroup.id)
       : { availability: [], responderCount: 0 };
-  const postCount = activeGroup ? homeData.posts.length : 0;
-  const anonymousCommentCount = activeGroup
-    ? homeData.posts.reduce((sum, post) => sum + post.anonymous_comments.length, 0)
-    : 0;
+  const selectedWeek = week ?? getCurrentWeekStart();
 
   return (
     <main className="min-h-screen">
@@ -99,33 +96,25 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
       </header>
 
-      <div
-        className={`mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:px-8 ${
-          activeGroup ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""
-        }`}
-      >
+      <div className="mx-auto max-w-6xl px-4 py-6 lg:px-8">
           <div className="space-y-6">
+            {!activeGroup ? (
             <section className="rounded-lg border border-neutral-200 bg-white p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-neutral-500">
-                    {homeData.user && activeGroup ? "그룹 홈" : homeData.user ? "내 스터디" : "서비스 준비"}
+                    {homeData.user ? "내 스터디" : "서비스 준비"}
                   </p>
                   <h1 className="mt-2 text-3xl font-semibold tracking-normal">
-                    {homeData.user && activeGroup
-                      ? activeGroup.name
-                      : homeData.user
-                        ? "스터디 목록"
-                        : "쉬었음청년 스터디"}
+                    {homeData.user ? "스터디 목록" : "쉬었음청년 스터디"}
                   </h1>
                   <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-600">
-                    {homeData.user && activeGroup
-                      ? "이 그룹의 모임 일정, 주차별 공유글, 멤버 작성 상태를 확인합니다."
-                      : "참여 중인 스터디를 선택하면 모임 일정과 주차별 기록을 볼 수 있습니다."}
+                    참여 중인 스터디를 선택하면 모임 일정과 주차별 기록을 볼 수 있습니다.
                   </p>
                 </div>
               </div>
             </section>
+            ) : null}
 
             {!homeData.configured ? (
               <section className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
@@ -166,64 +155,22 @@ export default async function Home({ searchParams }: HomeProps) {
               </section>
             ) : null}
 
-            <GroupList
-              activeGroupId={activeGroup?.id ?? null}
-              groups={homeData.groups}
-              isSignedIn={isSignedIn}
-            />
-
             {activeGroup ? (
-              <>
-                <MeetingCard
-                  availability={rescheduleOverview.availability}
-                  canManageSchedule={activeGroup.currentUserRole === "owner"}
-                  group={activeGroup}
-                  responderCount={rescheduleOverview.responderCount}
-                />
-                <PostComposer groupId={activeGroup.id} />
-                <FeedPreview posts={homeData.posts} />
-              </>
-            ) : null}
+              <GroupWorkspace
+                availability={rescheduleOverview.availability}
+                group={activeGroup}
+                posts={homeData.posts}
+                responderCount={rescheduleOverview.responderCount}
+                selectedWeek={selectedWeek}
+              />
+            ) : (
+              <GroupList
+                activeGroupId={null}
+                groups={homeData.groups}
+                isSignedIn={isSignedIn}
+              />
+            )}
           </div>
-
-          {activeGroup ? (
-          <aside className="space-y-4">
-            <section className="rounded-lg border border-neutral-200 bg-white p-5">
-              <p className="text-sm font-semibold text-neutral-500">이번 주 현황</p>
-              <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-between rounded-md bg-neutral-50 p-3">
-                  <span className="inline-flex items-center gap-2 text-sm font-semibold">
-                    <CheckCircle2 size={16} />
-                    공유글
-                  </span>
-                  <strong>{activeGroup ? postCount : "-"}</strong>
-                </div>
-                <div className="flex items-center justify-between rounded-md bg-neutral-50 p-3">
-                  <span className="inline-flex items-center gap-2 text-sm font-semibold">
-                    <CalendarDays size={16} />
-                    일정 응답
-                  </span>
-                  <strong>{activeGroup ? rescheduleOverview.responderCount : "-"}</strong>
-                </div>
-                <div className="flex items-center justify-between rounded-md bg-neutral-50 p-3">
-                  <span className="inline-flex items-center gap-2 text-sm font-semibold">
-                    <MessageCircle size={16} />
-                    익명 댓글
-                  </span>
-                  <strong>{activeGroup ? anonymousCommentCount : "-"}</strong>
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-lg border border-neutral-200 bg-white p-5">
-              <p className="text-sm font-semibold text-neutral-500">익명 피드백</p>
-              <p className="mt-3 text-sm leading-6 text-neutral-700">
-                댓글과 반응에는 작성자 컬럼을 만들지 않습니다. 서버는 그룹 멤버 여부만 확인하고 DB에는
-                본문과 대상 글만 저장합니다.
-              </p>
-            </section>
-          </aside>
-          ) : null}
       </div>
 
       {modal === "login" ? (
