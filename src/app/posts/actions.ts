@@ -163,4 +163,5 @@ export async function createAnonymousReactionAction(formData: FormData) {
 
   await supabase.from("anonymous_reactions").insert(payload as never);
   revalidatePath(`/posts/${postId}`);
+  redirect(`/posts/${postId}`);
 }
