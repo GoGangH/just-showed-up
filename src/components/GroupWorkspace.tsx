@@ -5,6 +5,7 @@ import {
   ChevronRight,
   MapPin,
   RotateCcw,
+  UserPlus,
   UsersRound,
 } from "lucide-react";
 import type { HomeGroup, HomePost } from "@/app/home-data";
@@ -258,6 +259,13 @@ export function GroupWorkspace({
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <Link
+              className="inline-flex items-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
+              href={`/?group=${group.id}&week=${visibleWeek}&modal=invite`}
+            >
+              <UserPlus size={16} />
+              초대
+            </Link>
             <Link
               className="inline-flex items-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
               href={`/?group=${group.id}&modal=reschedule`}

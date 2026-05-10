@@ -1,4 +1,5 @@
 import { AppModal } from "@/components/AppModal";
+import { GroupInvitePanel } from "@/components/GroupInvitePanel";
 import { GroupList } from "@/components/GroupList";
 import { GroupWorkspace } from "@/components/GroupWorkspace";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -13,6 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentWeekStart } from "@/lib/dates/week";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { getHomeData } from "./home-data";
 
 type HomeProps = {
@@ -20,11 +22,18 @@ type HomeProps = {
     group?: string;
     modal?: string;
     week?: string;
+    invite?: string;
   }>;
 };
 
 export default async function Home({ searchParams }: HomeProps) {
-  const { group, modal, week } = await searchParams;
+  const { group, invite, modal, week } = await searchParams;
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "127.0.0.1:3000";
+  const protocol =
+    requestHeaders.get("x-forwarded-proto") ??
+    (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
+  const origin = `${protocol}://${host}`;
   const homeData = await getHomeData(group);
   const activeGroup = group ? homeData.groups.find((item) => item.id === group) ?? null : null;
   const isSignedIn = Boolean(homeData.user);
@@ -175,6 +184,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
       {modal === "login" ? (
         <AppModal
+          closeHref={activeGroup ? `/?group=${activeGroup.id}&week=${selectedWeek}` : "/"}
           description="OAuth 계정으로 로그인하고 그룹의 주간 기록과 모임 일정을 관리합니다."
           size="sm"
           title="로그인"
@@ -185,6 +195,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
       {modal === "new-group" ? (
         <AppModal
+          closeHref={activeGroup ? `/?group=${activeGroup.id}&week=${selectedWeek}` : "/"}
           description={
             homeData.user
               ? "기본 모임 시간과 장소를 설정해두면 매주 같은 기준으로 스터디를 운영할 수 있습니다."
@@ -202,6 +213,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
       {modal === "join-group" ? (
         <AppModal
+          closeHref={activeGroup ? `/?group=${activeGroup.id}&week=${selectedWeek}` : "/"}
           description={
             homeData.user
               ? "그룹 관리자에게 받은 초대 코드를 입력하면 스터디 그룹에 참여할 수 있습니다."
@@ -210,15 +222,31 @@ export default async function Home({ searchParams }: HomeProps) {
           title={homeData.user ? "초대 코드로 참여" : "로그인"}
         >
           {homeData.user ? (
-            <GroupJoinForm />
+            <GroupJoinForm defaultInviteCode={invite ?? ""} />
           ) : (
             <LoginForm />
           )}
         </AppModal>
       ) : null}
 
+      {modal === "invite" && activeGroup ? (
+        <AppModal
+          closeHref={`/?group=${activeGroup.id}&week=${selectedWeek}`}
+          description="초대 코드를 복사하거나 공유 앱으로 보내서 새 멤버를 초대합니다."
+          size="sm"
+          title="그룹 초대"
+        >
+          <GroupInvitePanel
+            groupName={activeGroup.name}
+            inviteCode={activeGroup.invite_code}
+            inviteUrl={`${origin}/?modal=join-group&invite=${encodeURIComponent(activeGroup.invite_code)}`}
+          />
+        </AppModal>
+      ) : null}
+
       {modal === "reschedule" ? (
         <AppModal
+          closeHref={activeGroup ? `/?group=${activeGroup.id}&week=${selectedWeek}` : "/"}
           description={
             homeData.user
               ? "이번 주 가능한 시간을 칠해두면 그룹원이 겹치는 시간을 기준으로 모임을 다시 잡을 수 있습니다."
@@ -240,7 +268,7 @@ export default async function Home({ searchParams }: HomeProps) {
       ) : null}
 
       {modal === "profile" && homeData.user ? (
-        <AppModal title="내 정보" size="sm">
+        <AppModal closeHref={activeGroup ? `/?group=${activeGroup.id}&week=${selectedWeek}` : "/"} title="내 정보" size="sm">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               {homeData.user.avatarUrl ? (

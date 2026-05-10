@@ -5,7 +5,7 @@ import { joinGroupAction, type GroupFormState } from "../actions";
 
 const initialState: GroupFormState = {};
 
-export function GroupJoinForm() {
+export function GroupJoinForm({ defaultInviteCode = "" }: { defaultInviteCode?: string }) {
   const [state, formAction, pending] = useActionState(joinGroupAction, initialState);
 
   return (
@@ -14,6 +14,7 @@ export function GroupJoinForm() {
         <span className="text-sm font-medium text-neutral-700">초대 코드</span>
         <input
           className="mt-1 w-full rounded-md border border-neutral-300 bg-white px-4 py-3 font-mono outline-none focus:border-neutral-900"
+          defaultValue={defaultInviteCode}
           name="invite_code"
           placeholder="초대 코드를 입력하세요"
         />
