@@ -305,6 +305,19 @@ export async function createWeeklyPostAction(
     return { error: weekError };
   }
 
+  const { data: existingPostData } = await supabase
+    .from("weekly_posts")
+    .select("id")
+    .eq("group_id", groupId)
+    .eq("author_id", user.id)
+    .eq("week_start", weekStart)
+    .maybeSingle();
+  const existingPost = existingPostData as { id: string } | null;
+
+  if (existingPost) {
+    redirect(`/posts/${existingPost.id}/edit`);
+  }
+
   const postId = crypto.randomUUID();
   const postPayload: WeeklyPostInsert = {
     id: postId,

@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getCurrentWeekStart } from "@/lib/dates/week";
+import { hasSupabaseConfig } from "@/lib/supabase/env";
+import { createClient } from "@/lib/supabase/server";
 import { PostCreateForm } from "./PostCreateForm";
 
 type NewPostPageProps = {
@@ -28,6 +31,28 @@ function formatWeekStart(value: string) {
 export default async function NewPostPage({ searchParams }: NewPostPageProps) {
   const { group, week } = await searchParams;
   const weekStart = getSafeWeekStart(week);
+  let existingPost: { id: string; title: string } | null = null;
+
+  if (group && hasSupabaseConfig()) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect("/?modal=login");
+    }
+
+    const { data: existingPostData } = await supabase
+      .from("weekly_posts")
+      .select("id,title")
+      .eq("group_id", group)
+      .eq("author_id", user.id)
+      .eq("week_start", weekStart)
+      .maybeSingle();
+
+    existingPost = existingPostData as { id: string; title: string } | null;
+  }
 
   return (
     <main className="min-h-screen px-4 py-8">
@@ -46,6 +71,25 @@ export default async function NewPostPage({ searchParams }: NewPostPageProps) {
         {!group ? (
           <div className="mt-6 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
             그룹 정보가 없습니다. 홈에서 그룹을 선택한 뒤 다시 작성해주세요.
+          </div>
+        ) : existingPost ? (
+          <div className="mt-6 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+            <p className="font-semibold">이미 이 주차에 작성한 글이 있습니다.</p>
+            <p className="mt-1">새 글을 하나 더 만들지 않고 기존 글을 수정합니다.</p>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <Link
+                className="rounded-md bg-neutral-900 px-4 py-2 text-center text-sm font-semibold text-white"
+                href={`/posts/${existingPost.id}/edit`}
+              >
+                기존 글 수정
+              </Link>
+              <Link
+                className="rounded-md border border-amber-300 bg-white px-4 py-2 text-center text-sm font-semibold text-amber-900"
+                href={`/?group=${group}&week=${weekStart}`}
+              >
+                그룹으로 돌아가기
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="mt-6">
