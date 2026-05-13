@@ -19,6 +19,7 @@ type PageProps = {
 type PostDetail = Database["public"]["Tables"]["weekly_posts"]["Row"] & {
   author: { nickname: string } | null;
   post_links: Database["public"]["Tables"]["post_links"]["Row"][];
+  post_attachments: Database["public"]["Tables"]["post_attachments"]["Row"][];
   anonymous_comments: Database["public"]["Tables"]["anonymous_comments"]["Row"][];
   anonymous_reactions: Pick<
     Database["public"]["Tables"]["anonymous_reactions"]["Row"],
@@ -59,7 +60,7 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
   const { data, error } = await supabase
     .from("weekly_posts")
     .select(
-      "*,post_links(*),anonymous_comments(*),anonymous_reactions(id,reaction_type)",
+      "*,post_links(*),post_attachments(*),anonymous_comments(*),anonymous_reactions(id,reaction_type)",
     )
     .eq("id", postId)
     .single();
@@ -81,6 +82,21 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
   };
   const reactionCounts = countReactions(post);
   const backHref = safeInternalHref(from) ?? `/?group=${post.group_id}&week=${post.week_start}`;
+  const imageAttachments = post.post_attachments.filter((attachment) =>
+    attachment.file_type.startsWith("image/"),
+  );
+  const signedImages = await Promise.all(
+    imageAttachments.map(async (attachment) => {
+      const { data: signedData } = await supabase.storage
+        .from("post-attachments")
+        .createSignedUrl(attachment.file_path, 60 * 30);
+
+      return {
+        ...attachment,
+        signedUrl: signedData?.signedUrl ?? null,
+      };
+    }),
+  );
 
   return (
     <main className="min-h-screen px-4 py-8">
@@ -126,6 +142,34 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
                   </p>
                 </a>
               ))}
+            </section>
+          ) : null}
+
+          {signedImages.length > 0 ? (
+            <section className="mt-6">
+              <h2 className="text-sm font-semibold text-neutral-500">첨부 이미지</h2>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {signedImages.map((image) =>
+                  image.signedUrl ? (
+                    <a
+                      className="block overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50"
+                      href={image.signedUrl}
+                      key={image.id}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      <img
+                        alt={image.file_name}
+                        className="aspect-video w-full object-cover"
+                        src={image.signedUrl}
+                      />
+                      <p className="truncate px-3 py-2 text-xs font-medium text-neutral-600">
+                        {image.file_name}
+                      </p>
+                    </a>
+                  ) : null,
+                )}
+              </div>
             </section>
           ) : null}
         </article>

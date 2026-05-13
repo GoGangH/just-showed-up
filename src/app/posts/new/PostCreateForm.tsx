@@ -71,7 +71,19 @@ export function PostCreateForm({ groupId, weekStart }: PostCreateFormProps) {
       </div>
 
       <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4 text-sm leading-6 text-neutral-600">
-        PDF와 이미지 업로드는 다음 단계에서 Supabase Storage 권한 설정과 함께 연결합니다.
+        <label className="block">
+          <span className="font-medium text-neutral-700">이미지 첨부</span>
+          <input
+            accept="image/*"
+            className="mt-2 block w-full text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-900 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+            multiple
+            name="images"
+            type="file"
+          />
+        </label>
+        <p className="mt-2 text-xs text-neutral-500">
+          JPG, PNG, WebP, GIF 이미지를 최대 5개까지 첨부할 수 있습니다.
+        </p>
       </div>
 
       {state.error ? (

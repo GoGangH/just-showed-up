@@ -75,6 +75,22 @@ export function PostEditForm({ post }: PostEditFormProps) {
         </div>
       </div>
 
+      <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4 text-sm leading-6 text-neutral-600">
+        <label className="block">
+          <span className="font-medium text-neutral-700">이미지 추가 첨부</span>
+          <input
+            accept="image/*"
+            className="mt-2 block w-full text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-900 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+            multiple
+            name="images"
+            type="file"
+          />
+        </label>
+        <p className="mt-2 text-xs text-neutral-500">
+          기존 이미지는 유지되고 새 이미지만 추가됩니다.
+        </p>
+      </div>
+
       {state.error ? (
         <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {state.error}

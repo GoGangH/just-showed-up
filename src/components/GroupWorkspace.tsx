@@ -136,6 +136,20 @@ function getStudyStartWeek(group: HomeGroup) {
   return getCurrentWeekStart(new Date(group.created_at));
 }
 
+function getThisWeekMeetingDate(group: HomeGroup, currentWeek: string) {
+  if (group.default_meeting_day === null || !group.default_meeting_time) {
+    return null;
+  }
+
+  const [year, month, day] = currentWeek.split("-").map(Number);
+  const [hour, minute] = group.default_meeting_time.split(":").map(Number);
+  if (!year || !month || !day) return null;
+
+  const meeting = new Date(year, month - 1, day, hour || 0, minute || 0, 0, 0);
+  meeting.setDate(meeting.getDate() + group.default_meeting_day);
+  return meeting;
+}
+
 function clampWeek(weekStart: string, minWeek: string, maxWeek: string) {
   if (weekStart < minWeek) return minWeek;
   if (weekStart > maxWeek) return maxWeek;
@@ -157,7 +171,15 @@ export function GroupWorkspace({
 }) {
   const studyStartWeek = getStudyStartWeek(group);
   const currentWeek = getCurrentWeekStart();
-  const previewLimitWeek = addWeeks(currentWeek, 1);
+  const thisWeekMeeting = getThisWeekMeetingDate(group, currentWeek);
+  const currentUserPostedThisWeek = Boolean(
+    currentUserId &&
+      posts.some((post) => post.author_id === currentUserId && post.week_start === currentWeek),
+  );
+  const canPreviewNextWeek = thisWeekMeeting
+    ? Date.now() >= thisWeekMeeting.getTime()
+    : currentUserPostedThisWeek;
+  const previewLimitWeek = canPreviewNextWeek ? addWeeks(currentWeek, 1) : currentWeek;
   const visibleWeek = clampWeek(selectedWeek, studyStartWeek, previewLimitWeek);
   const postsForWeek = posts.filter((post) => post.week_start === visibleWeek);
   const postsByAuthor = new Map(postsForWeek.map((post) => [post.author_id, post]));

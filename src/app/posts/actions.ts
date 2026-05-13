@@ -15,14 +15,211 @@ export type PostFormState = {
 
 type WeeklyPostInsert = Database["public"]["Tables"]["weekly_posts"]["Insert"];
 type PostLinkInsert = Database["public"]["Tables"]["post_links"]["Insert"];
+type PostAttachmentInsert = Database["public"]["Tables"]["post_attachments"]["Insert"];
 type AnonymousCommentInsert = Database["public"]["Tables"]["anonymous_comments"]["Insert"];
 type AnonymousReactionInsert = Database["public"]["Tables"]["anonymous_reactions"]["Insert"];
+
+const attachmentBucket = "post-attachments";
+const imageTypes = new Set(["image/gif", "image/jpeg", "image/png", "image/webp"]);
+const maxImageCount = 5;
+const maxImageSize = 5 * 1024 * 1024;
 
 function collectLinks(formData: FormData) {
   return formData
     .getAll("links")
     .map((value) => String(value).trim())
     .filter(Boolean);
+}
+
+function collectImages(formData: FormData) {
+  return formData
+    .getAll("images")
+    .filter((value): value is File => value instanceof File && value.size > 0);
+}
+
+function getSafeFileName(name: string) {
+  const fallback = "image";
+  const safe = name
+    .trim()
+    .replace(/[/\\?%*:|"<>]/g, "-")
+    .replace(/\s+/g, "-")
+    .slice(0, 80);
+
+  return safe || fallback;
+}
+
+function getFileExtension(file: File) {
+  const fromName = file.name.split(".").pop()?.toLowerCase();
+  if (fromName && /^[a-z0-9]+$/.test(fromName)) {
+    return fromName;
+  }
+
+  return {
+    "image/gif": "gif",
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+  }[file.type] ?? "img";
+}
+
+function validateImages(images: File[]) {
+  if (images.length > maxImageCount) {
+    return `이미지는 최대 ${maxImageCount}개까지 첨부할 수 있습니다.`;
+  }
+
+  const invalidType = images.find((image) => !imageTypes.has(image.type));
+  if (invalidType) {
+    return "이미지는 JPG, PNG, WebP, GIF 형식만 첨부할 수 있습니다.";
+  }
+
+  const oversized = images.find((image) => image.size > maxImageSize);
+  if (oversized) {
+    return "이미지 한 장의 크기는 5MB 이하여야 합니다.";
+  }
+
+  return null;
+}
+
+function addWeeks(weekStart: string, amount: number) {
+  const [year, month, day] = weekStart.split("-").map(Number);
+  if (!year || !month || !day) return weekStart;
+
+  const date = new Date(year, month - 1, day, 12, 0, 0, 0);
+  date.setDate(date.getDate() + amount * 7);
+
+  const nextYear = date.getFullYear();
+  const nextMonth = String(date.getMonth() + 1).padStart(2, "0");
+  const nextDay = String(date.getDate()).padStart(2, "0");
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+}
+
+function getThisWeekMeetingDate(group: {
+  default_meeting_day: number | null;
+  default_meeting_time: string | null;
+}) {
+  if (group.default_meeting_day === null || !group.default_meeting_time) {
+    return null;
+  }
+
+  const currentWeek = getCurrentWeekStart();
+  const [year, month, day] = currentWeek.split("-").map(Number);
+  const [hour, minute] = group.default_meeting_time.split(":").map(Number);
+  if (!year || !month || !day) return null;
+
+  const meeting = new Date(year, month - 1, day, hour || 0, minute || 0, 0, 0);
+  meeting.setDate(meeting.getDate() + group.default_meeting_day);
+  return meeting;
+}
+
+function isWeekStart(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(`${value}T00:00:00`).getTime());
+}
+
+async function validatePostWeek({
+  groupId,
+  supabase,
+  userId,
+  weekStart,
+}: {
+  groupId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any;
+  userId: string;
+  weekStart: string;
+}) {
+  if (!isWeekStart(weekStart)) {
+    return "작성 주차를 다시 선택해주세요.";
+  }
+
+  const { data: groupData } = await supabase
+    .from("groups")
+    .select("created_at,default_meeting_day,default_meeting_time")
+    .eq("id", groupId)
+    .single();
+  const group = groupData as {
+    created_at: string;
+    default_meeting_day: number | null;
+    default_meeting_time: string | null;
+  } | null;
+
+  if (!group) {
+    return "그룹 정보를 확인하지 못했습니다.";
+  }
+
+  const currentWeek = getCurrentWeekStart();
+  const studyStartWeek = getCurrentWeekStart(new Date(group.created_at));
+  const thisWeekMeeting = getThisWeekMeetingDate(group);
+  let canWriteNextWeek = thisWeekMeeting ? Date.now() >= thisWeekMeeting.getTime() : false;
+
+  if (!thisWeekMeeting) {
+    const { data: currentPostData } = await supabase
+      .from("weekly_posts")
+      .select("id")
+      .eq("group_id", groupId)
+      .eq("author_id", userId)
+      .eq("week_start", currentWeek)
+      .maybeSingle();
+    canWriteNextWeek = Boolean(currentPostData);
+  }
+
+  const maxWeek = canWriteNextWeek ? addWeeks(currentWeek, 1) : currentWeek;
+  if (weekStart < studyStartWeek || weekStart > maxWeek) {
+    return "아직 작성할 수 없는 주차입니다.";
+  }
+
+  return null;
+}
+
+async function uploadPostImages({
+  groupId,
+  images,
+  postId,
+  supabase,
+  userId,
+}: {
+  groupId: string;
+  images: File[];
+  postId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any;
+  userId: string;
+}) {
+  const uploadedPaths: string[] = [];
+  const attachments: PostAttachmentInsert[] = [];
+
+  for (const [index, image] of images.entries()) {
+    const extension = getFileExtension(image);
+    const fileName = getSafeFileName(image.name);
+    const filePath = `${userId}/${groupId}/${postId}/${crypto.randomUUID()}-${index}.${extension}`;
+    const { error } = await supabase.storage
+      .from(attachmentBucket)
+      .upload(filePath, image, {
+        cacheControl: "3600",
+        contentType: image.type,
+        upsert: false,
+      });
+
+    if (error) {
+      if (uploadedPaths.length > 0) {
+        await supabase.storage.from(attachmentBucket).remove(uploadedPaths);
+      }
+      return {
+        attachments: [],
+        error: "이미지를 업로드하지 못했습니다. Storage 버킷과 권한 설정을 확인해주세요.",
+      };
+    }
+
+    uploadedPaths.push(filePath);
+    attachments.push({
+      file_name: fileName,
+      file_path: filePath,
+      file_size: image.size,
+      file_type: image.type,
+      post_id: postId,
+    });
+  }
+
+  return { attachments, error: null };
 }
 
 export async function createWeeklyPostAction(
@@ -39,6 +236,8 @@ export async function createWeeklyPostAction(
   const feedbackQuestion = String(formData.get("feedback_question") ?? "").trim();
   const weekStart = String(formData.get("week_start") ?? getCurrentWeekStart()).trim();
   const links = collectLinks(formData);
+  const images = collectImages(formData);
+  const imageError = validateImages(images);
 
   if (!groupId) {
     return { error: "그룹 정보가 필요합니다." };
@@ -52,6 +251,10 @@ export async function createWeeklyPostAction(
     return { error: "본문은 10자 이상 입력해주세요." };
   }
 
+  if (imageError) {
+    return { error: imageError };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -61,7 +264,20 @@ export async function createWeeklyPostAction(
     return { error: "로그인이 필요합니다." };
   }
 
+  const weekError = await validatePostWeek({
+    groupId,
+    supabase,
+    userId: user.id,
+    weekStart,
+  });
+
+  if (weekError) {
+    return { error: weekError };
+  }
+
+  const postId = crypto.randomUUID();
   const postPayload: WeeklyPostInsert = {
+    id: postId,
     group_id: groupId,
     author_id: user.id,
     week_start: weekStart,
@@ -80,6 +296,33 @@ export async function createWeeklyPostAction(
 
   if (error || !post) {
     return { error: "공유글을 저장하지 못했습니다. 그룹 권한과 DB 설정을 확인해주세요." };
+  }
+
+  if (images.length > 0) {
+    const uploadResult = await uploadPostImages({
+      groupId,
+      images,
+      postId: post.id,
+      supabase,
+      userId: user.id,
+    });
+
+    if (uploadResult.error) {
+      await supabase.from("weekly_posts").delete().eq("id", post.id).eq("author_id", user.id);
+      return { error: uploadResult.error };
+    }
+
+    const { error: attachmentError } = await supabase
+      .from("post_attachments")
+      .insert(uploadResult.attachments as never);
+
+    if (attachmentError) {
+      await supabase.storage
+        .from(attachmentBucket)
+        .remove(uploadResult.attachments.map((attachment) => attachment.file_path));
+      await supabase.from("weekly_posts").delete().eq("id", post.id).eq("author_id", user.id);
+      return { error: "이미지 첨부 정보를 저장하지 못했습니다." };
+    }
   }
 
   if (links.length > 0) {
@@ -187,6 +430,8 @@ export async function updateWeeklyPostAction(
   const bodyMarkdown = String(formData.get("body_markdown") ?? "").trim();
   const feedbackQuestion = String(formData.get("feedback_question") ?? "").trim();
   const links = collectLinks(formData);
+  const images = collectImages(formData);
+  const imageError = validateImages(images);
 
   if (!postId) {
     return { error: "공유글 정보가 필요합니다." };
@@ -198,6 +443,10 @@ export async function updateWeeklyPostAction(
 
   if (bodyMarkdown.length < 10) {
     return { error: "본문은 10자 이상 입력해주세요." };
+  }
+
+  if (imageError) {
+    return { error: imageError };
   }
 
   const supabase = await createClient();
@@ -222,6 +471,43 @@ export async function updateWeeklyPostAction(
 
   if (error) {
     return { error: "공유글을 수정하지 못했습니다. 작성자 권한을 확인해주세요." };
+  }
+
+  if (images.length > 0) {
+    const { data: postData } = await supabase
+      .from("weekly_posts")
+      .select("id,group_id,author_id")
+      .eq("id", postId)
+      .eq("author_id", user.id)
+      .single();
+    const post = postData as { author_id: string; group_id: string; id: string } | null;
+
+    if (!post) {
+      return { error: "공유글 정보를 확인하지 못했습니다." };
+    }
+
+    const uploadResult = await uploadPostImages({
+      groupId: post.group_id,
+      images,
+      postId,
+      supabase,
+      userId: user.id,
+    });
+
+    if (uploadResult.error) {
+      return { error: uploadResult.error };
+    }
+
+    const { error: attachmentError } = await supabase
+      .from("post_attachments")
+      .insert(uploadResult.attachments as never);
+
+    if (attachmentError) {
+      await supabase.storage
+        .from(attachmentBucket)
+        .remove(uploadResult.attachments.map((attachment) => attachment.file_path));
+      return { error: "이미지 첨부 정보를 저장하지 못했습니다." };
+    }
   }
 
   const { error: deleteLinkError } = await supabase.from("post_links").delete().eq("post_id", postId);
