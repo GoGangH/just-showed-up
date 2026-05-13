@@ -19,6 +19,13 @@ export function MarkdownViewer({ content }: { content: string }) {
               {children}
             </a>
           ),
+          img: ({ alt, src }) => (
+            <img
+              alt={alt ?? ""}
+              className="max-h-[520px] w-full rounded-lg border border-neutral-200 object-contain"
+              src={src ?? ""}
+            />
+          ),
           code: ({ children }) => (
             <code className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[0.92em]">
               {children}

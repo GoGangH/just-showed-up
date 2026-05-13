@@ -18,6 +18,10 @@ type PostLinkInsert = Database["public"]["Tables"]["post_links"]["Insert"];
 type PostAttachmentInsert = Database["public"]["Tables"]["post_attachments"]["Insert"];
 type AnonymousCommentInsert = Database["public"]["Tables"]["anonymous_comments"]["Insert"];
 type AnonymousReactionInsert = Database["public"]["Tables"]["anonymous_reactions"]["Insert"];
+type CollectedAttachment = {
+  file: File;
+  token: string;
+};
 
 const attachmentBucket = "post-attachments";
 const imageTypes = new Set(["image/gif", "image/jpeg", "image/png", "image/webp"]);
@@ -36,7 +40,13 @@ function collectLinks(formData: FormData) {
 
 function collectAttachments(formData: FormData) {
   const values = [...formData.getAll("attachments"), ...formData.getAll("images")];
-  return values.filter((value): value is File => value instanceof File && value.size > 0);
+  const files = values.filter((value): value is File => value instanceof File && value.size > 0);
+  const tokens = formData.getAll("attachment_tokens").map((value) => String(value));
+
+  return files.map((file, index) => ({
+    file,
+    token: isUuid(tokens[index]) ? tokens[index] : crypto.randomUUID(),
+  }));
 }
 
 function getSafeFileName(name: string) {
@@ -65,25 +75,25 @@ function getFileExtension(file: File) {
   }[file.type] ?? "file";
 }
 
-function validateAttachments(attachments: File[]) {
+function validateAttachments(attachments: CollectedAttachment[]) {
   if (attachments.length > maxAttachmentCount) {
     return `첨부 파일은 최대 ${maxAttachmentCount}개까지 올릴 수 있습니다.`;
   }
 
-  const invalidType = attachments.find((attachment) => !allowedAttachmentTypes.has(attachment.type));
+  const invalidType = attachments.find((attachment) => !allowedAttachmentTypes.has(attachment.file.type));
   if (invalidType) {
     return "첨부 파일은 JPG, PNG, WebP, GIF, PDF 형식만 올릴 수 있습니다.";
   }
 
   const oversizedImage = attachments.find(
-    (attachment) => imageTypes.has(attachment.type) && attachment.size > maxImageSize,
+    (attachment) => imageTypes.has(attachment.file.type) && attachment.file.size > maxImageSize,
   );
   if (oversizedImage) {
     return "이미지 한 장의 크기는 5MB 이하여야 합니다.";
   }
 
   const oversizedPdf = attachments.find(
-    (attachment) => pdfTypes.has(attachment.type) && attachment.size > maxPdfSize,
+    (attachment) => pdfTypes.has(attachment.file.type) && attachment.file.size > maxPdfSize,
   );
   if (oversizedPdf) {
     return "PDF 한 개의 크기는 20MB 이하여야 합니다.";
@@ -125,6 +135,12 @@ function getThisWeekMeetingDate(group: {
 
 function isWeekStart(value: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(`${value}T00:00:00`).getTime());
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
 }
 
 async function validatePostWeek({
@@ -189,7 +205,7 @@ async function uploadPostAttachments({
   supabase,
   userId,
 }: {
-  attachments: File[];
+  attachments: CollectedAttachment[];
   groupId: string;
   postId: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -199,7 +215,8 @@ async function uploadPostAttachments({
   const uploadedPaths: string[] = [];
   const attachments: PostAttachmentInsert[] = [];
 
-  for (const [index, file] of files.entries()) {
+  for (const [index, attachment] of files.entries()) {
+    const file = attachment.file;
     const extension = getFileExtension(file);
     const fileName = getSafeFileName(file.name);
     const filePath = `${userId}/${groupId}/${postId}/${crypto.randomUUID()}-${index}.${extension}`;
@@ -223,6 +240,7 @@ async function uploadPostAttachments({
 
     uploadedPaths.push(filePath);
     attachments.push({
+      id: attachment.token,
       file_name: fileName,
       file_path: filePath,
       file_size: file.size,

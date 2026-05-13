@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
+import { PostAttachmentInput } from "@/app/posts/PostAttachmentInput";
 import {
   deletePostAttachmentAction,
   updateWeeklyPostAction,
@@ -28,6 +29,7 @@ type PostEditFormProps = {
 export function PostEditForm({ post }: PostEditFormProps) {
   const [state, formAction, pending] = useActionState(updateWeeklyPostAction, initialState);
   const [links, setLinks] = useState(post.links.length > 0 ? post.links : [""]);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const formatFileSize = (value: number) => {
     if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)}MB`;
     return `${Math.max(1, Math.round(value / 1024))}KB`;
@@ -50,6 +52,7 @@ export function PostEditForm({ post }: PostEditFormProps) {
       <label className="block">
         <span className="text-sm font-medium text-neutral-700">본문</span>
         <textarea
+          ref={textareaRef}
           className="mt-1 min-h-72 w-full resize-y rounded-md border border-neutral-300 bg-white px-4 py-3 font-mono text-sm leading-6 outline-none focus:border-neutral-900"
           defaultValue={post.body_markdown}
           name="body_markdown"
@@ -90,21 +93,7 @@ export function PostEditForm({ post }: PostEditFormProps) {
         </div>
       </div>
 
-      <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4 text-sm leading-6 text-neutral-600">
-        <label className="block">
-          <span className="font-medium text-neutral-700">파일 추가 첨부</span>
-          <input
-            accept="image/*,application/pdf"
-            className="mt-2 block w-full text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-900 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
-            multiple
-            name="attachments"
-            type="file"
-          />
-        </label>
-        <p className="mt-2 text-xs text-neutral-500">
-          기존 파일은 유지되고 새 파일만 추가됩니다. 이미지와 PDF를 최대 5개까지 올릴 수 있습니다.
-        </p>
-      </div>
+      <PostAttachmentInput existingAttachments={post.attachments} textareaRef={textareaRef} />
 
       {post.attachments.length > 0 ? (
         <section className="rounded-md border border-neutral-200 p-4">

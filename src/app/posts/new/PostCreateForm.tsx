@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
+import { PostAttachmentInput } from "@/app/posts/PostAttachmentInput";
 import { createWeeklyPostAction, type PostFormState } from "../actions";
 
 const initialState: PostFormState = {};
@@ -13,6 +14,7 @@ type PostCreateFormProps = {
 export function PostCreateForm({ groupId, weekStart }: PostCreateFormProps) {
   const [state, formAction, pending] = useActionState(createWeeklyPostAction, initialState);
   const [links, setLinks] = useState([""]);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   return (
     <form action={formAction} className="space-y-5">
@@ -31,6 +33,7 @@ export function PostCreateForm({ groupId, weekStart }: PostCreateFormProps) {
       <label className="block">
         <span className="text-sm font-medium text-neutral-700">본문</span>
         <textarea
+          ref={textareaRef}
           className="mt-1 min-h-72 w-full resize-y rounded-md border border-neutral-300 bg-white px-4 py-3 font-mono text-sm leading-6 outline-none focus:border-neutral-900"
           name="body_markdown"
           placeholder={"Markdown으로 작성할 수 있습니다.\n\n## 이번 주 진행한 내용\n- \n\n## 어려웠던 점\n- \n\n## 모임에서 이야기하고 싶은 내용\n- "}
@@ -70,21 +73,7 @@ export function PostCreateForm({ groupId, weekStart }: PostCreateFormProps) {
         </div>
       </div>
 
-      <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4 text-sm leading-6 text-neutral-600">
-        <label className="block">
-          <span className="font-medium text-neutral-700">파일 첨부</span>
-          <input
-            accept="image/*,application/pdf"
-            className="mt-2 block w-full text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-900 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
-            multiple
-            name="attachments"
-            type="file"
-          />
-        </label>
-        <p className="mt-2 text-xs text-neutral-500">
-          JPG, PNG, WebP, GIF 이미지와 PDF를 최대 5개까지 첨부할 수 있습니다.
-        </p>
-      </div>
+      <PostAttachmentInput textareaRef={textareaRef} />
 
       {state.error ? (
         <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

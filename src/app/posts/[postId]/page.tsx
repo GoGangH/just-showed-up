@@ -48,6 +48,12 @@ function formatFileSize(value: number) {
   return `${Math.max(1, Math.round(value / 1024))}KB`;
 }
 
+function getInlineAttachmentIds(content: string) {
+  return new Set(
+    Array.from(content.matchAll(/attachment:([0-9a-f-]{36})/gi)).map((match) => match[1]),
+  );
+}
+
 export default async function PostDetailPage({ params, searchParams }: PageProps) {
   const { postId } = await params;
   const { from } = await searchParams;
@@ -112,6 +118,17 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
   const signedPdfs = signedAttachments.filter((attachment) =>
     pdfAttachments.some((pdf) => pdf.id === attachment.id),
   );
+  const inlineAttachmentIds = getInlineAttachmentIds(post.body_markdown);
+  const signedImageById = new Map(
+    signedImages
+      .filter((image) => image.signedUrl)
+      .map((image) => [image.id, image.signedUrl as string]),
+  );
+  const bodyMarkdown = post.body_markdown.replace(
+    /attachment:([0-9a-f-]{36})/gi,
+    (match, attachmentId: string) => signedImageById.get(attachmentId) ?? match,
+  );
+  const unattachedImages = signedImages.filter((image) => !inlineAttachmentIds.has(image.id));
 
   return (
     <main className="min-h-screen px-4 py-8">
@@ -134,7 +151,7 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
           ) : null}
 
           <div className="mt-6">
-            <MarkdownViewer content={post.body_markdown} />
+            <MarkdownViewer content={bodyMarkdown} />
           </div>
 
           {post.post_links.length > 0 ? (
@@ -160,11 +177,11 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
             </section>
           ) : null}
 
-          {signedImages.length > 0 ? (
+          {unattachedImages.length > 0 ? (
             <section className="mt-6">
-              <h2 className="text-sm font-semibold text-neutral-500">첨부 이미지</h2>
+              <h2 className="text-sm font-semibold text-neutral-500">본문에 넣지 않은 이미지</h2>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {signedImages.map((image) =>
+                {unattachedImages.map((image) =>
                   image.signedUrl ? (
                     <a
                       className="block overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50"
