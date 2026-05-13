@@ -6,6 +6,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { GroupJoinForm } from "@/app/groups/join/GroupJoinForm";
 import { GroupCreateForm } from "@/app/groups/new/GroupCreateForm";
+import { GroupSettingsForm } from "@/app/groups/settings/GroupSettingsForm";
 import { LoginForm } from "@/app/login/LoginForm";
 import { getRescheduleOverview } from "@/app/sessions/reschedule/data";
 import { RescheduleForm } from "@/app/sessions/reschedule/RescheduleForm";
@@ -241,6 +242,22 @@ export default async function Home({ searchParams }: HomeProps) {
             inviteCode={activeGroup.invite_code}
             inviteUrl={`${origin}/?modal=join-group&invite=${encodeURIComponent(activeGroup.invite_code)}`}
           />
+        </AppModal>
+      ) : null}
+
+      {modal === "group-settings" && activeGroup ? (
+        <AppModal
+          closeHref={`/?group=${activeGroup.id}&week=${selectedWeek}`}
+          description="그룹의 고정 모임 요일, 시간, 장소를 수정합니다."
+          title="그룹 설정"
+        >
+          {activeGroup.currentUserRole === "owner" ? (
+            <GroupSettingsForm group={activeGroup} week={selectedWeek} />
+          ) : (
+            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              그룹장만 모임 정보를 수정할 수 있습니다.
+            </p>
+          )}
         </AppModal>
       ) : null}
 

@@ -5,6 +5,7 @@ import {
   ChevronRight,
   MapPin,
   RotateCcw,
+  Settings,
   UserPlus,
   UsersRound,
 } from "lucide-react";
@@ -176,6 +177,7 @@ export function GroupWorkspace({
   const nextWeek = addWeeks(visibleWeek, 1);
   const canGoPrevious = visibleWeek > studyStartWeek;
   const canGoNext = visibleWeek < currentWeek;
+  const isOwner = group.currentUserRole === "owner";
   const detailsGrid = (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <div className="rounded-md bg-neutral-50 p-3">
@@ -259,6 +261,15 @@ export function GroupWorkspace({
           </div>
 
           <div className="flex flex-wrap gap-2">
+            {isOwner ? (
+              <Link
+                className="inline-flex items-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
+                href={`/?group=${group.id}&week=${visibleWeek}&modal=group-settings`}
+              >
+                <Settings size={16} />
+                설정
+              </Link>
+            ) : null}
             <Link
               className="inline-flex items-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
               href={`/?group=${group.id}&week=${visibleWeek}&modal=invite`}
