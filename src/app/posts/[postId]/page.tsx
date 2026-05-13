@@ -69,6 +69,9 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
   }
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from("weekly_posts")
     .select(
@@ -92,6 +95,7 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
     ...postData,
     author,
   };
+  const isAuthor = user?.id === post.author_id;
   const reactionCounts = countReactions(post);
   const backHref = safeInternalHref(from) ?? `/?group=${post.group_id}&week=${post.week_start}`;
   const imageAttachments = post.post_attachments.filter((attachment) =>
@@ -133,9 +137,19 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
   return (
     <main className="min-h-screen px-4 py-8">
       <div className="mx-auto max-w-4xl space-y-5">
-        <Link className="text-sm font-semibold text-neutral-500 hover:text-neutral-900" href={backHref as never}>
-          이전으로
-        </Link>
+        <div className="flex items-center justify-between gap-3">
+          <Link className="text-sm font-semibold text-neutral-500 hover:text-neutral-900" href={backHref as never}>
+            이전으로
+          </Link>
+          {isAuthor ? (
+            <Link
+              className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
+              href={`/posts/${post.id}/edit`}
+            >
+              수정
+            </Link>
+          ) : null}
+        </div>
 
         <article className="rounded-lg border border-neutral-200 bg-white p-6">
           <p className="text-sm font-semibold text-neutral-500">

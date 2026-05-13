@@ -646,6 +646,54 @@ export async function deletePostAttachmentAction(formData: FormData) {
   redirect(`/posts/${postId}/edit`);
 }
 
+export async function deleteWeeklyPostAction(formData: FormData) {
+  if (!hasSupabaseConfig()) {
+    return;
+  }
+
+  const postId = String(formData.get("post_id") ?? "").trim();
+  const confirmDelete = String(formData.get("confirm_delete") ?? "") === "yes";
+
+  if (!postId || !confirmDelete) {
+    return;
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/?modal=login");
+  }
+
+  const { data: postData } = await supabase
+    .from("weekly_posts")
+    .select("id,author_id,group_id,week_start,post_attachments(file_path)")
+    .eq("id", postId)
+    .single();
+  const post = postData as {
+    author_id: string;
+    group_id: string;
+    id: string;
+    post_attachments: { file_path: string }[];
+    week_start: string;
+  } | null;
+
+  if (!post || post.author_id !== user.id) {
+    redirect(`/posts/${postId}`);
+  }
+
+  const filePaths = post.post_attachments.map((attachment) => attachment.file_path);
+  if (filePaths.length > 0) {
+    await supabase.storage.from(attachmentBucket).remove(filePaths);
+  }
+
+  await supabase.from("weekly_posts").delete().eq("id", post.id).eq("author_id", user.id);
+
+  redirect(`/?group=${post.group_id}&week=${post.week_start}`);
+}
+
 export async function createAnonymousReactionAction(formData: FormData) {
   if (!hasSupabaseConfig()) {
     return;

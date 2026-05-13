@@ -5,6 +5,7 @@ import { PostAttachmentInput } from "@/app/posts/PostAttachmentInput";
 import { PostBodyEditor } from "@/app/posts/PostBodyEditor";
 import {
   deletePostAttachmentAction,
+  deleteWeeklyPostAction,
   updateWeeklyPostAction,
   type PostFormState,
 } from "../../actions";
@@ -135,6 +136,30 @@ export function PostEditForm({ post }: PostEditFormProps) {
         </button>
       </div>
     </form>
+      <section className="mt-6 rounded-md border border-red-200 bg-red-50 p-4">
+        <p className="text-sm font-semibold text-red-800">공유글 삭제</p>
+        <p className="mt-1 text-sm leading-6 text-red-700">
+          삭제하면 본문, 링크, 첨부 파일, 익명 댓글과 반응이 함께 사라집니다.
+        </p>
+        <form action={deleteWeeklyPostAction} className="mt-3 space-y-3">
+          <input name="post_id" type="hidden" value={post.id} />
+          <label className="flex items-center gap-2 text-sm font-medium text-red-800">
+            <input
+              className="size-4 rounded border-red-300"
+              name="confirm_delete"
+              type="checkbox"
+              value="yes"
+            />
+            이 공유글을 삭제합니다
+          </label>
+          <button
+            className="rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+            type="submit"
+          >
+            공유글 삭제
+          </button>
+        </form>
+      </section>
       {post.attachments.map((attachment) => (
         <form
           action={deletePostAttachmentAction}
