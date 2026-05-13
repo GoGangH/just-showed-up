@@ -21,8 +21,11 @@ type AnonymousReactionInsert = Database["public"]["Tables"]["anonymous_reactions
 
 const attachmentBucket = "post-attachments";
 const imageTypes = new Set(["image/gif", "image/jpeg", "image/png", "image/webp"]);
-const maxImageCount = 5;
+const pdfTypes = new Set(["application/pdf"]);
+const allowedAttachmentTypes = new Set([...imageTypes, ...pdfTypes]);
+const maxAttachmentCount = 5;
 const maxImageSize = 5 * 1024 * 1024;
+const maxPdfSize = 20 * 1024 * 1024;
 
 function collectLinks(formData: FormData) {
   return formData
@@ -31,14 +34,13 @@ function collectLinks(formData: FormData) {
     .filter(Boolean);
 }
 
-function collectImages(formData: FormData) {
-  return formData
-    .getAll("images")
-    .filter((value): value is File => value instanceof File && value.size > 0);
+function collectAttachments(formData: FormData) {
+  const values = [...formData.getAll("attachments"), ...formData.getAll("images")];
+  return values.filter((value): value is File => value instanceof File && value.size > 0);
 }
 
 function getSafeFileName(name: string) {
-  const fallback = "image";
+  const fallback = "attachment";
   const safe = name
     .trim()
     .replace(/[/\\?%*:|"<>]/g, "-")
@@ -59,22 +61,32 @@ function getFileExtension(file: File) {
     "image/jpeg": "jpg",
     "image/png": "png",
     "image/webp": "webp",
-  }[file.type] ?? "img";
+    "application/pdf": "pdf",
+  }[file.type] ?? "file";
 }
 
-function validateImages(images: File[]) {
-  if (images.length > maxImageCount) {
-    return `이미지는 최대 ${maxImageCount}개까지 첨부할 수 있습니다.`;
+function validateAttachments(attachments: File[]) {
+  if (attachments.length > maxAttachmentCount) {
+    return `첨부 파일은 최대 ${maxAttachmentCount}개까지 올릴 수 있습니다.`;
   }
 
-  const invalidType = images.find((image) => !imageTypes.has(image.type));
+  const invalidType = attachments.find((attachment) => !allowedAttachmentTypes.has(attachment.type));
   if (invalidType) {
-    return "이미지는 JPG, PNG, WebP, GIF 형식만 첨부할 수 있습니다.";
+    return "첨부 파일은 JPG, PNG, WebP, GIF, PDF 형식만 올릴 수 있습니다.";
   }
 
-  const oversized = images.find((image) => image.size > maxImageSize);
-  if (oversized) {
+  const oversizedImage = attachments.find(
+    (attachment) => imageTypes.has(attachment.type) && attachment.size > maxImageSize,
+  );
+  if (oversizedImage) {
     return "이미지 한 장의 크기는 5MB 이하여야 합니다.";
+  }
+
+  const oversizedPdf = attachments.find(
+    (attachment) => pdfTypes.has(attachment.type) && attachment.size > maxPdfSize,
+  );
+  if (oversizedPdf) {
+    return "PDF 한 개의 크기는 20MB 이하여야 합니다.";
   }
 
   return null;
@@ -170,15 +182,15 @@ async function validatePostWeek({
   return null;
 }
 
-async function uploadPostImages({
+async function uploadPostAttachments({
+  attachments: files,
   groupId,
-  images,
   postId,
   supabase,
   userId,
 }: {
+  attachments: File[];
   groupId: string;
-  images: File[];
   postId: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any;
@@ -187,15 +199,15 @@ async function uploadPostImages({
   const uploadedPaths: string[] = [];
   const attachments: PostAttachmentInsert[] = [];
 
-  for (const [index, image] of images.entries()) {
-    const extension = getFileExtension(image);
-    const fileName = getSafeFileName(image.name);
+  for (const [index, file] of files.entries()) {
+    const extension = getFileExtension(file);
+    const fileName = getSafeFileName(file.name);
     const filePath = `${userId}/${groupId}/${postId}/${crypto.randomUUID()}-${index}.${extension}`;
     const { error } = await supabase.storage
       .from(attachmentBucket)
-      .upload(filePath, image, {
+      .upload(filePath, file, {
         cacheControl: "3600",
-        contentType: image.type,
+        contentType: file.type,
         upsert: false,
       });
 
@@ -205,7 +217,7 @@ async function uploadPostImages({
       }
       return {
         attachments: [],
-        error: "이미지를 업로드하지 못했습니다. Storage 버킷과 권한 설정을 확인해주세요.",
+        error: "첨부 파일을 업로드하지 못했습니다. Storage 버킷과 권한 설정을 확인해주세요.",
       };
     }
 
@@ -213,8 +225,8 @@ async function uploadPostImages({
     attachments.push({
       file_name: fileName,
       file_path: filePath,
-      file_size: image.size,
-      file_type: image.type,
+      file_size: file.size,
+      file_type: file.type,
       post_id: postId,
     });
   }
@@ -236,8 +248,8 @@ export async function createWeeklyPostAction(
   const feedbackQuestion = String(formData.get("feedback_question") ?? "").trim();
   const weekStart = String(formData.get("week_start") ?? getCurrentWeekStart()).trim();
   const links = collectLinks(formData);
-  const images = collectImages(formData);
-  const imageError = validateImages(images);
+  const attachments = collectAttachments(formData);
+  const attachmentError = validateAttachments(attachments);
 
   if (!groupId) {
     return { error: "그룹 정보가 필요합니다." };
@@ -251,8 +263,8 @@ export async function createWeeklyPostAction(
     return { error: "본문은 10자 이상 입력해주세요." };
   }
 
-  if (imageError) {
-    return { error: imageError };
+  if (attachmentError) {
+    return { error: attachmentError };
   }
 
   const supabase = await createClient();
@@ -298,10 +310,10 @@ export async function createWeeklyPostAction(
     return { error: "공유글을 저장하지 못했습니다. 그룹 권한과 DB 설정을 확인해주세요." };
   }
 
-  if (images.length > 0) {
-    const uploadResult = await uploadPostImages({
+  if (attachments.length > 0) {
+    const uploadResult = await uploadPostAttachments({
+      attachments,
       groupId,
-      images,
       postId: post.id,
       supabase,
       userId: user.id,
@@ -321,7 +333,7 @@ export async function createWeeklyPostAction(
         .from(attachmentBucket)
         .remove(uploadResult.attachments.map((attachment) => attachment.file_path));
       await supabase.from("weekly_posts").delete().eq("id", post.id).eq("author_id", user.id);
-      return { error: "이미지 첨부 정보를 저장하지 못했습니다." };
+      return { error: "첨부 파일 정보를 저장하지 못했습니다." };
     }
   }
 
@@ -430,8 +442,8 @@ export async function updateWeeklyPostAction(
   const bodyMarkdown = String(formData.get("body_markdown") ?? "").trim();
   const feedbackQuestion = String(formData.get("feedback_question") ?? "").trim();
   const links = collectLinks(formData);
-  const images = collectImages(formData);
-  const imageError = validateImages(images);
+  const attachments = collectAttachments(formData);
+  const attachmentError = validateAttachments(attachments);
 
   if (!postId) {
     return { error: "공유글 정보가 필요합니다." };
@@ -445,8 +457,8 @@ export async function updateWeeklyPostAction(
     return { error: "본문은 10자 이상 입력해주세요." };
   }
 
-  if (imageError) {
-    return { error: imageError };
+  if (attachmentError) {
+    return { error: attachmentError };
   }
 
   const supabase = await createClient();
@@ -473,7 +485,7 @@ export async function updateWeeklyPostAction(
     return { error: "공유글을 수정하지 못했습니다. 작성자 권한을 확인해주세요." };
   }
 
-  if (images.length > 0) {
+  if (attachments.length > 0) {
     const { data: postData } = await supabase
       .from("weekly_posts")
       .select("id,group_id,author_id")
@@ -486,9 +498,19 @@ export async function updateWeeklyPostAction(
       return { error: "공유글 정보를 확인하지 못했습니다." };
     }
 
-    const uploadResult = await uploadPostImages({
+    const { data: existingAttachmentData } = await supabase
+      .from("post_attachments")
+      .select("id")
+      .eq("post_id", postId);
+    const existingAttachmentCount = (existingAttachmentData ?? []).length;
+
+    if (existingAttachmentCount + attachments.length > maxAttachmentCount) {
+      return { error: `첨부 파일은 총 ${maxAttachmentCount}개까지만 유지할 수 있습니다.` };
+    }
+
+    const uploadResult = await uploadPostAttachments({
+      attachments,
       groupId: post.group_id,
-      images,
       postId,
       supabase,
       userId: user.id,
@@ -506,7 +528,7 @@ export async function updateWeeklyPostAction(
       await supabase.storage
         .from(attachmentBucket)
         .remove(uploadResult.attachments.map((attachment) => attachment.file_path));
-      return { error: "이미지 첨부 정보를 저장하지 못했습니다." };
+      return { error: "첨부 파일 정보를 저장하지 못했습니다." };
     }
   }
 
@@ -536,6 +558,61 @@ export async function updateWeeklyPostAction(
 
   revalidatePath(`/posts/${postId}`);
   redirect(`/posts/${postId}`);
+}
+
+export async function deletePostAttachmentAction(formData: FormData) {
+  if (!hasSupabaseConfig()) {
+    return;
+  }
+
+  const attachmentId = String(formData.get("attachment_id") ?? "").trim();
+  const postId = String(formData.get("post_id") ?? "").trim();
+
+  if (!attachmentId || !postId) {
+    return;
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/?modal=login");
+  }
+
+  const { data: postData } = await supabase
+    .from("weekly_posts")
+    .select("id,author_id")
+    .eq("id", postId)
+    .single();
+  const post = postData as { author_id: string; id: string } | null;
+
+  if (!post || post.author_id !== user.id) {
+    redirect(`/posts/${postId}`);
+  }
+
+  const { data: attachmentData } = await supabase
+    .from("post_attachments")
+    .select("id,file_path")
+    .eq("id", attachmentId)
+    .eq("post_id", postId)
+    .single();
+  const attachment = attachmentData as { file_path: string; id: string } | null;
+
+  if (!attachment) {
+    redirect(`/posts/${postId}/edit`);
+  }
+
+  await supabase
+    .from("post_attachments")
+    .delete()
+    .eq("id", attachment.id)
+    .eq("post_id", postId);
+  await supabase.storage.from(attachmentBucket).remove([attachment.file_path]);
+
+  revalidatePath(`/posts/${postId}`);
+  redirect(`/posts/${postId}/edit`);
 }
 
 export async function createAnonymousReactionAction(formData: FormData) {

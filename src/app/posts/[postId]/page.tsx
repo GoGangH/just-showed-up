@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FileText } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { MarkdownViewer } from "@/components/markdown/MarkdownViewer";
@@ -40,6 +41,11 @@ function safeInternalHref(value: string | null | undefined) {
   }
 
   return value;
+}
+
+function formatFileSize(value: number) {
+  if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)}MB`;
+  return `${Math.max(1, Math.round(value / 1024))}KB`;
 }
 
 export default async function PostDetailPage({ params, searchParams }: PageProps) {
@@ -85,8 +91,11 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
   const imageAttachments = post.post_attachments.filter((attachment) =>
     attachment.file_type.startsWith("image/"),
   );
-  const signedImages = await Promise.all(
-    imageAttachments.map(async (attachment) => {
+  const pdfAttachments = post.post_attachments.filter(
+    (attachment) => attachment.file_type === "application/pdf",
+  );
+  const signedAttachments = await Promise.all(
+    post.post_attachments.map(async (attachment) => {
       const { data: signedData } = await supabase.storage
         .from("post-attachments")
         .createSignedUrl(attachment.file_path, 60 * 30);
@@ -96,6 +105,12 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
         signedUrl: signedData?.signedUrl ?? null,
       };
     }),
+  );
+  const signedImages = signedAttachments.filter((attachment) =>
+    imageAttachments.some((image) => image.id === attachment.id),
+  );
+  const signedPdfs = signedAttachments.filter((attachment) =>
+    pdfAttachments.some((pdf) => pdf.id === attachment.id),
   );
 
   return (
@@ -166,6 +181,40 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
                       <p className="truncate px-3 py-2 text-xs font-medium text-neutral-600">
                         {image.file_name}
                       </p>
+                    </a>
+                  ) : null,
+                )}
+              </div>
+            </section>
+          ) : null}
+
+          {signedPdfs.length > 0 ? (
+            <section className="mt-6">
+              <h2 className="text-sm font-semibold text-neutral-500">첨부 PDF</h2>
+              <div className="mt-3 space-y-2">
+                {signedPdfs.map((pdf) =>
+                  pdf.signedUrl ? (
+                    <a
+                      className="flex items-center justify-between gap-3 rounded-md border border-neutral-200 bg-neutral-50 p-4 hover:border-neutral-300"
+                      href={pdf.signedUrl}
+                      key={pdf.id}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      <span className="flex min-w-0 items-center gap-3">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-white text-neutral-700">
+                          <FileText size={18} />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-semibold text-neutral-900">
+                            {pdf.file_name}
+                          </span>
+                          <span className="mt-1 block text-xs text-neutral-500">
+                            PDF · {formatFileSize(pdf.file_size)}
+                          </span>
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-sm font-semibold text-neutral-600">열기</span>
                     </a>
                   ) : null,
                 )}

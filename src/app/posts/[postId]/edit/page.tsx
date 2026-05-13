@@ -27,7 +27,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
 
   const { data } = await supabase
     .from("weekly_posts")
-    .select("id,title,body_markdown,feedback_question,author_id,post_links(url)")
+    .select("id,title,body_markdown,feedback_question,author_id,post_links(url),post_attachments(id,file_name,file_type,file_size)")
     .eq("id", postId)
     .single();
 
@@ -36,6 +36,12 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
     body_markdown: string;
     feedback_question: string | null;
     id: string;
+    post_attachments: {
+      file_name: string;
+      file_size: number;
+      file_type: string;
+      id: string;
+    }[];
     post_links: { url: string }[];
     title: string;
   } | null;
@@ -65,6 +71,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
               body_markdown: post.body_markdown,
               feedback_question: post.feedback_question,
               id: post.id,
+              attachments: post.post_attachments,
               links: post.post_links.map((link) => link.url),
               title: post.title,
             }}
