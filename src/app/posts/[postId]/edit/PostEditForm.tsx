@@ -2,6 +2,7 @@
 
 import { useActionState, useRef, useState } from "react";
 import { PostAttachmentInput } from "@/app/posts/PostAttachmentInput";
+import { PostBodyEditor } from "@/app/posts/PostBodyEditor";
 import {
   deletePostAttachmentAction,
   updateWeeklyPostAction,
@@ -49,15 +50,7 @@ export function PostEditForm({ post }: PostEditFormProps) {
         />
       </label>
 
-      <label className="block">
-        <span className="text-sm font-medium text-neutral-700">본문</span>
-        <textarea
-          ref={textareaRef}
-          className="mt-1 min-h-72 w-full resize-y rounded-md border border-neutral-300 bg-white px-4 py-3 font-mono text-sm leading-6 outline-none focus:border-neutral-900"
-          defaultValue={post.body_markdown}
-          name="body_markdown"
-        />
-      </label>
+      <PostBodyEditor defaultValue={post.body_markdown} textareaRef={textareaRef} />
 
       <label className="block">
         <span className="text-sm font-medium text-neutral-700">피드백 받고 싶은 질문</span>

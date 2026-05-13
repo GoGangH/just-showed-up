@@ -29,6 +29,7 @@ function insertAtCursor(textarea: HTMLTextAreaElement, text: string) {
   textarea.focus();
   const nextPosition = before.length + insertion.length;
   textarea.setSelectionRange(nextPosition, nextPosition);
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 function getMarkdownImage(name: string, token: string) {
