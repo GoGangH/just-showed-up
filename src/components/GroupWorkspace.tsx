@@ -67,7 +67,9 @@ function formatWeekHeading(weekStart: string) {
   const date = new Date(`${weekStart}T00:00:00`);
   if (Number.isNaN(date.getTime())) return "주차 미정";
 
-  const prefix = weekStart === getCurrentWeekStart() ? "이번 주 " : "";
+  const currentWeek = getCurrentWeekStart();
+  const nextWeek = addWeeks(currentWeek, 1);
+  const prefix = weekStart === currentWeek ? "이번 주 " : weekStart === nextWeek ? "다음 주 " : "";
   return `${prefix}${date.getMonth() + 1}월 ${getWeekOfMonth(date)}주차(${date.getDate()}일)`;
 }
 
@@ -155,7 +157,8 @@ export function GroupWorkspace({
 }) {
   const studyStartWeek = getStudyStartWeek(group);
   const currentWeek = getCurrentWeekStart();
-  const visibleWeek = clampWeek(selectedWeek, studyStartWeek, currentWeek);
+  const previewLimitWeek = addWeeks(currentWeek, 1);
+  const visibleWeek = clampWeek(selectedWeek, studyStartWeek, previewLimitWeek);
   const postsForWeek = posts.filter((post) => post.week_start === visibleWeek);
   const postsByAuthor = new Map(postsForWeek.map((post) => [post.author_id, post]));
   const availability = rescheduleOverview?.availability ?? [];
@@ -173,10 +176,11 @@ export function GroupWorkspace({
     0,
   );
   const groupWeekHref = `/?group=${group.id}&week=${visibleWeek}`;
+  const weekStatusLabel = visibleWeek === currentWeek ? "이번 주" : "선택한 주차";
   const previousWeek = addWeeks(visibleWeek, -1);
   const nextWeek = addWeeks(visibleWeek, 1);
   const canGoPrevious = visibleWeek > studyStartWeek;
-  const canGoNext = visibleWeek < currentWeek;
+  const canGoNext = visibleWeek < previewLimitWeek;
   const isOwner = group.currentUserRole === "owner";
   const detailsGrid = (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -405,7 +409,7 @@ export function GroupWorkspace({
                     <div className="min-w-0">
                       <p className="font-semibold text-neutral-900">{member.nickname}</p>
                       <p className="mt-1 text-sm text-neutral-500">
-                        {post ? "이번 주 등록 완료" : "이번 주 등록글 없음"}
+                        {post ? `${weekStatusLabel} 등록 완료` : `${weekStatusLabel} 등록글 없음`}
                       </p>
                       <p className="mt-1 text-xs font-semibold text-neutral-500">
                         누적 미참여 {member.missedCount}회
@@ -420,7 +424,7 @@ export function GroupWorkspace({
                           ? "border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-900"
                           : "bg-neutral-900 text-white"
                       }`}
-                      href={post ? `/posts/${post.id}/edit` : `/posts/new?group=${group.id}`}
+                      href={post ? `/posts/${post.id}/edit` : `/posts/new?group=${group.id}&week=${visibleWeek}`}
                     >
                       {post ? "수정" : "작성"}
                     </Link>

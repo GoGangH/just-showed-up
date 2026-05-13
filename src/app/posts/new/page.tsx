@@ -5,11 +5,29 @@ import { PostCreateForm } from "./PostCreateForm";
 type NewPostPageProps = {
   searchParams: Promise<{
     group?: string;
+    week?: string;
   }>;
 };
 
+function getSafeWeekStart(value: string | undefined) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return getCurrentWeekStart();
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? getCurrentWeekStart() : value;
+}
+
+function formatWeekStart(value: string) {
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 주차`;
+}
+
 export default async function NewPostPage({ searchParams }: NewPostPageProps) {
-  const { group } = await searchParams;
+  const { group, week } = await searchParams;
+  const weekStart = getSafeWeekStart(week);
 
   return (
     <main className="min-h-screen px-4 py-8">
@@ -21,6 +39,9 @@ export default async function NewPostPage({ searchParams }: NewPostPageProps) {
         <p className="mt-2 text-sm leading-6 text-neutral-600">
           모임 전에 공유할 진행 내용, 자료 링크, 피드백 질문을 정리합니다.
         </p>
+        <p className="mt-3 inline-flex rounded-md bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-600">
+          작성 주차 · {formatWeekStart(weekStart)}
+        </p>
 
         {!group ? (
           <div className="mt-6 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
@@ -28,7 +49,7 @@ export default async function NewPostPage({ searchParams }: NewPostPageProps) {
           </div>
         ) : (
           <div className="mt-6">
-            <PostCreateForm groupId={group} weekStart={getCurrentWeekStart()} />
+            <PostCreateForm groupId={group} weekStart={weekStart} />
           </div>
         )}
       </section>
