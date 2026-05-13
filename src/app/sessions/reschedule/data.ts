@@ -12,12 +12,13 @@ export type RescheduleOverview = {
   availability: AvailabilitySummary[];
   reason: string | null;
   responderCount: number;
+  scheduledAt: string | null;
   status: "none" | "scheduled" | "rescheduling" | "confirmed" | "cancelled" | "completed";
 };
 
 export async function getRescheduleOverview(groupId: string): Promise<RescheduleOverview> {
   if (!hasSupabaseConfig()) {
-    return { availability: [], reason: null, responderCount: 0, status: "none" };
+    return { availability: [], reason: null, responderCount: 0, scheduledAt: null, status: "none" };
   }
 
   const supabase = await createClient();
@@ -25,11 +26,11 @@ export async function getRescheduleOverview(groupId: string): Promise<Reschedule
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return { availability: [], reason: null, responderCount: 0, status: "none" };
+  if (!user) return { availability: [], reason: null, responderCount: 0, scheduledAt: null, status: "none" };
 
   const { data: sessionData } = await supabase
     .from("study_sessions")
-    .select("id,status,reschedule_reason")
+    .select("id,status,reschedule_reason,scheduled_at")
     .eq("group_id", groupId)
     .eq("week_start", getCurrentWeekStart())
     .maybeSingle();
@@ -37,10 +38,11 @@ export async function getRescheduleOverview(groupId: string): Promise<Reschedule
   const session = sessionData as {
     id: string;
     reschedule_reason: string | null;
+    scheduled_at: string | null;
     status: RescheduleOverview["status"];
   } | null;
   if (!session) {
-    return { availability: [], reason: null, responderCount: 0, status: "none" };
+    return { availability: [], reason: null, responderCount: 0, scheduledAt: null, status: "none" };
   }
 
   const { data: slotRows } = await supabase
@@ -55,6 +57,7 @@ export async function getRescheduleOverview(groupId: string): Promise<Reschedule
       availability: [],
       reason: session.reschedule_reason,
       responderCount: 0,
+      scheduledAt: session.scheduled_at,
       status: session.status,
     };
   }
@@ -86,6 +89,7 @@ export async function getRescheduleOverview(groupId: string): Promise<Reschedule
     })),
     reason: session.reschedule_reason,
     responderCount: responders.size,
+    scheduledAt: session.scheduled_at,
     status: session.status,
   };
 }

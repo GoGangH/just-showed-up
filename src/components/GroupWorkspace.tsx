@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { HomeGroup, HomePost } from "@/app/home-data";
 import type { RescheduleOverview } from "@/app/sessions/reschedule/data";
+import { confirmRescheduleAction } from "@/app/sessions/actions";
 import Link from "next/link";
 
 const weekdays = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
@@ -105,6 +106,19 @@ function formatRemainingMeeting(group: HomeGroup) {
   return `모임까지 ${days}일 ${hours}시간`;
 }
 
+function formatSlotLabel(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "시간 미정";
+
+  return date.toLocaleString("ko-KR", {
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "numeric",
+    weekday: "short",
+  });
+}
+
 function getExcerpt(markdown: string) {
   return markdown
     .replace(/[#>*_`-]/g, "")
@@ -186,9 +200,12 @@ export function GroupWorkspace({
   const availability = rescheduleOverview?.availability ?? [];
   const hasVoted = availability.some((slot) => slot.selectedByMe);
   const isRescheduling = rescheduleOverview?.status === "rescheduling";
-  const topAvailability = availability
+  const isScheduleConfirmed = rescheduleOverview?.status === "confirmed" && rescheduleOverview.scheduledAt;
+  const sortedAvailability = availability
     .filter((slot) => slot.count > 0)
-    .sort((a, b) => b.count - a.count || new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0];
+    .sort((a, b) => b.count - a.count || new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+  const topAvailability = sortedAvailability[0];
+  const confirmCandidates = sortedAvailability.slice(0, 3);
   const totalCommentCount = postsForWeek.reduce(
     (sum, post) => sum + post.anonymous_comments.length,
     0,
@@ -349,6 +366,50 @@ export function GroupWorkspace({
               {hasVoted ? "투표 수정" : "투표하기"}
             </Link>
           </div>
+          {isOwner && confirmCandidates.length > 0 ? (
+            <div className="mt-4 border-t border-teal-200 pt-4">
+              <p className="text-sm font-semibold text-teal-900">그룹장 일정 확정</p>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {confirmCandidates.map((slot) => (
+                  <form action={confirmRescheduleAction} key={slot.startsAt}>
+                    <input name="group_id" type="hidden" value={group.id} />
+                    <input name="starts_at" type="hidden" value={slot.startsAt} />
+                    <button
+                      className="w-full rounded-md border border-teal-200 bg-white p-3 text-left hover:border-teal-700"
+                      type="submit"
+                    >
+                      <span className="block text-sm font-semibold text-neutral-900">
+                        {formatSlotLabel(slot.startsAt)}
+                      </span>
+                      <span className="mt-1 block text-xs text-neutral-600">
+                        {slot.count}명 가능
+                      </span>
+                      <span className="mt-2 inline-flex text-xs font-semibold text-teal-700">
+                        이 시간으로 확정
+                      </span>
+                    </button>
+                  </form>
+                ))}
+              </div>
+            </div>
+          ) : isOwner ? (
+            <div className="mt-4 rounded-md border border-teal-200 bg-white/70 p-3 text-sm text-teal-900">
+              아직 확정할 수 있는 후보 시간이 없습니다.
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {isScheduleConfirmed ? (
+        <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+          <p className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-800">
+            <CalendarClock size={16} />
+            이번 주 모임 시간이 확정되었습니다
+          </p>
+          <p className="mt-1 text-sm leading-6 text-emerald-800">
+            {formatSlotLabel(rescheduleOverview.scheduledAt ?? "")}
+            {group.default_location_name ? ` · ${formatLocation(group)}` : ""}
+          </p>
         </section>
       ) : null}
 
