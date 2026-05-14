@@ -19,36 +19,35 @@ type NotifyGroupMembersInput = {
   type: NotificationInsert["type"];
 };
 
-export async function getHeaderNotifications(supabase: AppSupabaseClient) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+export async function getHeaderNotifications(supabase: AppSupabaseClient, userId?: string | null) {
+  if (!userId) {
     return { notifications: [], unreadCount: 0 };
   }
 
-  const { data, error } = await supabase
-    .from("notifications")
-    .select("id,title,body,href,read_at,created_at,type")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(10);
+  const [listResult, unreadResult] = await Promise.all([
+    supabase
+      .from("notifications")
+      .select("id,title,body,href,read_at,created_at,type")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .is("read_at", null),
+  ]);
 
-  if (error) {
+  if (listResult.error) {
     return { notifications: [], unreadCount: 0 };
   }
 
-  const { count, error: unreadError } = await supabase
-    .from("notifications")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .is("read_at", null);
-
-  const notifications = (data ?? []) as HeaderNotification[];
+  const notifications = (listResult.data ?? []) as HeaderNotification[];
   return {
     notifications,
-    unreadCount: unreadError ? notifications.filter((notification) => !notification.read_at).length : count ?? 0,
+    unreadCount: unreadResult.error
+      ? notifications.filter((notification) => !notification.read_at).length
+      : unreadResult.count ?? 0,
   };
 }
 

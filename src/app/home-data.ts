@@ -142,10 +142,13 @@ export async function getHomeData(activeGroupId?: string): Promise<HomeData> {
     }[];
     const userIds = Array.from(new Set(members.map((member) => member.user_id)));
 
-    const { data: profileRows } =
+    const [profileResult, weeklyPostResult] = await Promise.all([
       userIds.length > 0
-        ? await supabase.from("profiles").select("id,nickname").in("id", userIds)
-        : { data: [] };
+        ? supabase.from("profiles").select("id,nickname").in("id", userIds)
+        : Promise.resolve({ data: [] }),
+      supabase.from("weekly_posts").select("group_id,author_id,week_start").in("group_id", groupIds),
+    ]);
+    const profileRows = profileResult.data;
 
     const profiles = new Map(
       ((profileRows ?? []) as { id: string; nickname: string }[]).map((profile) => [
@@ -154,10 +157,7 @@ export async function getHomeData(activeGroupId?: string): Promise<HomeData> {
       ]),
     );
 
-    const { data: weeklyPostRows } = await supabase
-      .from("weekly_posts")
-      .select("group_id,author_id,week_start")
-      .in("group_id", groupIds);
+    const weeklyPostRows = weeklyPostResult.data;
 
     const currentWeekStart = getCurrentWeekStart();
 

@@ -40,7 +40,7 @@ export default async function Home({ searchParams }: HomeProps) {
   const displayName =
     homeData.user?.name ?? homeData.user?.email?.split("@")[0] ?? "사용자";
   const notificationData = homeData.user
-    ? await getHeaderNotifications(await createClient())
+    ? await getHeaderNotifications(await createClient(), homeData.user.id)
     : { notifications: [], unreadCount: 0 };
   const rescheduleOverview =
     homeData.user && activeGroup
