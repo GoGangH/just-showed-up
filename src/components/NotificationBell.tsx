@@ -1,5 +1,6 @@
 import { Bell } from "lucide-react";
 import Link from "next/link";
+import { markAllNotificationsReadAction } from "@/app/notifications/actions";
 import type { HeaderNotification } from "@/lib/notifications";
 
 type NotificationBellProps = {
@@ -32,9 +33,21 @@ export function NotificationBell({ notifications, unreadCount }: NotificationBel
       </summary>
 
       <div className="absolute right-0 top-full z-20 mt-2 w-[min(calc(100vw-2rem),20rem)] overflow-hidden rounded-md border border-neutral-200 bg-white shadow-lg">
-        <div className="border-b border-neutral-100 px-4 py-3">
-          <p className="text-sm font-semibold text-neutral-900">알림</p>
-          <p className="mt-1 text-xs text-neutral-500">최근 알림 {notifications.length}개</p>
+        <div className="flex items-start justify-between gap-3 border-b border-neutral-100 px-4 py-3">
+          <div>
+            <p className="text-sm font-semibold text-neutral-900">알림</p>
+            <p className="mt-1 text-xs text-neutral-500">최근 알림 {notifications.length}개</p>
+          </div>
+          {unreadCount > 0 ? (
+            <form action={markAllNotificationsReadAction}>
+              <button
+                className="rounded-md border border-neutral-200 px-2 py-1 text-xs font-semibold text-neutral-600 hover:border-neutral-300 hover:text-neutral-900"
+                type="submit"
+              >
+                모두 읽음
+              </button>
+            </form>
+          ) : null}
         </div>
 
         {notifications.length === 0 ? (
