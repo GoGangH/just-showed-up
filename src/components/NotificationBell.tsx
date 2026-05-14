@@ -31,7 +31,7 @@ export function NotificationBell({ notifications, unreadCount }: NotificationBel
         ) : null}
       </summary>
 
-      <div className="absolute right-0 top-full z-20 mt-2 w-80 overflow-hidden rounded-md border border-neutral-200 bg-white shadow-lg">
+      <div className="absolute right-0 top-full z-20 mt-2 w-[min(calc(100vw-2rem),20rem)] overflow-hidden rounded-md border border-neutral-200 bg-white shadow-lg">
         <div className="border-b border-neutral-100 px-4 py-3">
           <p className="text-sm font-semibold text-neutral-900">알림</p>
           <p className="mt-1 text-xs text-neutral-500">최근 알림 {notifications.length}개</p>
