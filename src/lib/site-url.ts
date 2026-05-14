@@ -3,12 +3,27 @@ function normalizeSiteUrl(value: string) {
 }
 
 export function getConfiguredSiteUrl() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.SITE_URL;
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.SITE_URL ??
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ??
+    process.env.VERCEL_URL;
   return siteUrl ? normalizeSiteUrl(siteUrl) : null;
 }
 
+export function getConfiguredSiteOrigin() {
+  const siteUrl = getConfiguredSiteUrl();
+  if (!siteUrl) {
+    return null;
+  }
+
+  return siteUrl.startsWith("http://") || siteUrl.startsWith("https://")
+    ? siteUrl
+    : `https://${siteUrl}`;
+}
+
 export function getRequestOrigin(headersList: Pick<Headers, "get">) {
-  const configuredSiteUrl = getConfiguredSiteUrl();
+  const configuredSiteUrl = getConfiguredSiteOrigin();
   if (configuredSiteUrl) {
     return configuredSiteUrl;
   }

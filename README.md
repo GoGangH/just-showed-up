@@ -30,7 +30,8 @@ bun run dev
 ```
 
 Supabase 프로젝트를 만든 뒤 `.env.local`에 값을 채우고 `supabase/migrations`의 SQL을 적용합니다.
-배포 환경에서는 `NEXT_PUBLIC_SITE_URL`을 실제 서비스 주소로 설정합니다.
+배포 환경에서는 `NEXT_PUBLIC_SITE_URL`을 실제 서비스 주소로 설정합니다. 이 값이 없으면 Vercel의
+`VERCEL_PROJECT_PRODUCTION_URL` 또는 `VERCEL_URL`을 fallback으로 사용합니다.
 
 ```text
 NEXT_PUBLIC_SITE_URL=https://just-showed-up.vercel.app

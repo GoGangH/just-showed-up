@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { getSafeRedirectPath } from "@/lib/redirects";
+import { getConfiguredSiteOrigin } from "@/lib/site-url";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -12,5 +13,6 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  return NextResponse.redirect(new URL(getSafeRedirectPath(requestUrl.searchParams.get("next")), request.url));
+  const redirectOrigin = getConfiguredSiteOrigin() ?? requestUrl.origin;
+  return NextResponse.redirect(new URL(getSafeRedirectPath(requestUrl.searchParams.get("next")), redirectOrigin));
 }
