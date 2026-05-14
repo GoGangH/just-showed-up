@@ -39,6 +39,21 @@ function collectLinks(formData: FormData) {
     .filter(Boolean);
 }
 
+function validateLinks(links: string[]) {
+  for (const link of links) {
+    try {
+      const url = new URL(link);
+      if (!["http:", "https:"].includes(url.protocol)) {
+        return "공유 링크는 http 또는 https 주소만 사용할 수 있습니다.";
+      }
+    } catch {
+      return "공유 링크 주소를 다시 확인해주세요.";
+    }
+  }
+
+  return null;
+}
+
 function collectAttachments(formData: FormData) {
   const values = [...formData.getAll("attachments"), ...formData.getAll("images")];
   const files = values.filter((value): value is File => value instanceof File && value.size > 0);
@@ -289,6 +304,7 @@ export async function createWeeklyPostAction(
   const feedbackQuestion = String(formData.get("feedback_question") ?? "").trim();
   const weekStart = String(formData.get("week_start") ?? getCurrentWeekStart()).trim();
   const links = collectLinks(formData);
+  const linkError = validateLinks(links);
   const attachments = collectAttachments(formData);
   const attachmentError = validateAttachments(attachments);
 
@@ -306,6 +322,10 @@ export async function createWeeklyPostAction(
 
   if (attachmentError) {
     return { error: attachmentError };
+  }
+
+  if (linkError) {
+    return { error: linkError };
   }
 
   const supabase = await createClient();
@@ -494,6 +514,7 @@ export async function updateWeeklyPostAction(
   const bodyMarkdown = String(formData.get("body_markdown") ?? "").trim();
   const feedbackQuestion = String(formData.get("feedback_question") ?? "").trim();
   const links = collectLinks(formData);
+  const linkError = validateLinks(links);
   const attachments = collectAttachments(formData);
   const attachmentError = validateAttachments(attachments);
 
@@ -511,6 +532,10 @@ export async function updateWeeklyPostAction(
 
   if (attachmentError) {
     return { error: attachmentError };
+  }
+
+  if (linkError) {
+    return { error: linkError };
   }
 
   const supabase = await createClient();

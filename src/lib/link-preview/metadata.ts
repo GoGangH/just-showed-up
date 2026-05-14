@@ -44,9 +44,8 @@ export function normalizePreviewUrl(value: string) {
 }
 
 export async function fetchLinkPreview(url: string): Promise<LinkPreview> {
-  const target = normalizePreviewUrl(url);
-
   try {
+    const target = normalizePreviewUrl(url);
     const response = await fetch(target, {
       headers: {
         "user-agent": "just-showed-up-link-preview/0.1",
@@ -77,12 +76,13 @@ export async function fetchLinkPreview(url: string): Promise<LinkPreview> {
       siteName: extractMeta(html, "og:site_name") ?? target.hostname,
     };
   } catch {
+    const fallbackUrl = url.trim();
     return {
-      url: target.toString(),
-      title: target.hostname,
+      url: fallbackUrl,
+      title: fallbackUrl,
       description: null,
       imageUrl: null,
-      siteName: target.hostname,
+      siteName: null,
     };
   }
 }
