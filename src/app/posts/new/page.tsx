@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentWeekStart } from "@/lib/dates/week";
+import { buildLoginHref } from "@/lib/redirects";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import { PostCreateForm } from "./PostCreateForm";
@@ -40,7 +41,7 @@ export default async function NewPostPage({ searchParams }: NewPostPageProps) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      redirect("/?modal=login");
+      redirect(buildLoginHref(`/posts/new?group=${group}&week=${weekStart}`) as never);
     }
 
     const { data: existingPostData } = await supabase

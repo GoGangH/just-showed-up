@@ -6,6 +6,7 @@ import type { Provider } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { getRequestOrigin } from "@/lib/site-url";
+import { getSafeRedirectPath } from "@/lib/redirects";
 
 export type AuthFormState = {
   error?: string;
@@ -28,11 +29,13 @@ export async function oauthSignInAction(
 
   const headersList = await headers();
   const origin = getRequestOrigin(headersList);
+  const callbackUrl = new URL("/auth/callback", origin);
+  callbackUrl.searchParams.set("next", getSafeRedirectPath(formData.get("next")));
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: provider as Provider,
     options: {
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: callbackUrl.toString(),
     },
   });
 

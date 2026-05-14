@@ -7,6 +7,7 @@ import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { getCurrentWeekStart } from "@/lib/dates/week";
 import { fetchLinkPreview } from "@/lib/link-preview/metadata";
 import { notifyGroupMembers, notifyUser } from "@/lib/notifications";
+import { buildLoginHref } from "@/lib/redirects";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type PostFormState = {
@@ -609,7 +610,7 @@ export async function deletePostAttachmentAction(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/?modal=login");
+    redirect(buildLoginHref(`/posts/${postId}/edit`) as never);
   }
 
   const { data: postData } = await supabase
@@ -664,7 +665,7 @@ export async function deleteWeeklyPostAction(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/?modal=login");
+    redirect(buildLoginHref(`/posts/${postId}/edit`) as never);
   }
 
   const { data: postData } = await supabase

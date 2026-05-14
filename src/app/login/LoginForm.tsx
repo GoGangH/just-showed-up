@@ -24,11 +24,12 @@ const providers = [
   },
 ];
 
-export function LoginForm() {
+export function LoginForm({ nextPath = "/" }: { nextPath?: string }) {
   const [state, formAction, pending] = useActionState(oauthSignInAction, initialState);
 
   return (
     <form action={formAction} className="space-y-2.5">
+      <input name="next" type="hidden" value={nextPath} />
       {providers.map((provider) => (
         <button
           className="flex w-full items-center justify-center gap-3 rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm font-semibold text-neutral-800 hover:border-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"

@@ -13,6 +13,7 @@ import { RescheduleForm } from "@/app/sessions/reschedule/RescheduleForm";
 import { getHeaderNotifications } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentWeekStart } from "@/lib/dates/week";
+import { buildLoginHref, getSafeRedirectPath } from "@/lib/redirects";
 import { getRequestOrigin } from "@/lib/site-url";
 import { Plus } from "lucide-react";
 import Link from "next/link";
@@ -23,13 +24,14 @@ type HomeProps = {
   searchParams: Promise<{
     group?: string;
     modal?: string;
+    next?: string;
     week?: string;
     invite?: string;
   }>;
 };
 
 export default async function Home({ searchParams }: HomeProps) {
-  const { group, invite, modal, week } = await searchParams;
+  const { group, invite, modal, next, week } = await searchParams;
   const requestHeaders = await headers();
   const origin = getRequestOrigin(requestHeaders);
   const homeData = await getHomeData(group);
@@ -45,6 +47,8 @@ export default async function Home({ searchParams }: HomeProps) {
       ? await getRescheduleOverview(activeGroup.id)
       : { availability: [], reason: null, responderCount: 0, scheduledAt: null, status: "none" as const };
   const selectedWeek = week ?? getCurrentWeekStart();
+  const currentPath = activeGroup ? `/?group=${activeGroup.id}&week=${selectedWeek}` : "/";
+  const loginNextPath = getSafeRedirectPath(next, currentPath);
 
   return (
     <main className="min-h-screen">
@@ -89,12 +93,12 @@ export default async function Home({ searchParams }: HomeProps) {
               <>
                 <Link
                   className="hidden items-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900 sm:inline-flex"
-                  href="/?modal=login"
+                  href={buildLoginHref("/?modal=new-group") as never}
                 >
                   <Plus size={16} />
                   그룹 만들기
                 </Link>
-                <Link className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-semibold text-white" href="/?modal=login">
+                <Link className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-semibold text-white" href={buildLoginHref(currentPath) as never}>
                   로그인
                 </Link>
               </>
@@ -187,7 +191,7 @@ export default async function Home({ searchParams }: HomeProps) {
           size="sm"
           title="로그인"
         >
-          <LoginForm />
+          <LoginForm nextPath={loginNextPath} />
         </AppModal>
       ) : null}
 
@@ -204,7 +208,7 @@ export default async function Home({ searchParams }: HomeProps) {
           {homeData.user ? (
             <GroupCreateForm />
           ) : (
-            <LoginForm />
+            <LoginForm nextPath="/?modal=new-group" />
           )}
         </AppModal>
       ) : null}
@@ -222,7 +226,9 @@ export default async function Home({ searchParams }: HomeProps) {
           {homeData.user ? (
             <GroupJoinForm defaultInviteCode={invite ?? ""} />
           ) : (
-            <LoginForm />
+            <LoginForm
+              nextPath={`/?modal=join-group${invite ? `&invite=${encodeURIComponent(invite)}` : ""}`}
+            />
           )}
         </AppModal>
       ) : null}

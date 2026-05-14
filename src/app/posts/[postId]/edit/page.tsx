@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { buildLoginHref } from "@/lib/redirects";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import { PostEditForm } from "./PostEditForm";
@@ -22,7 +23,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/?modal=login");
+    redirect(buildLoginHref(`/posts/${postId}/edit`) as never);
   }
 
   const { data } = await supabase

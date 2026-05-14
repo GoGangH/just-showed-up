@@ -1,9 +1,18 @@
 import Link from "next/link";
 import { LoginForm } from "./LoginForm";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
+import { getSafeRedirectPath } from "@/lib/redirects";
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{
+    next?: string;
+  }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { next } = await searchParams;
   const configured = hasSupabaseConfig();
+  const nextPath = getSafeRedirectPath(next);
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
@@ -27,7 +36,7 @@ export default function LoginPage() {
         ) : null}
 
         <div className="mt-6">
-          <LoginForm />
+          <LoginForm nextPath={nextPath} />
         </div>
       </section>
     </main>

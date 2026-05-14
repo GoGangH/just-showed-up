@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Clock3, MapPin, UsersRound } from "lucide-react";
 import type { HomeGroup } from "@/app/home-data";
+import { buildLoginHref } from "@/lib/redirects";
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -81,13 +82,13 @@ export function GroupList({
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <Link
             className="rounded-md bg-neutral-900 px-4 py-2 text-center text-sm font-semibold text-white"
-            href="/?modal=login"
+            href={buildLoginHref("/?modal=new-group") as never}
           >
             그룹 만들기
           </Link>
           <Link
             className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-center text-sm font-semibold text-neutral-700"
-            href="/?modal=login"
+            href={buildLoginHref("/?modal=join-group") as never}
           >
             초대 코드 참여
           </Link>
