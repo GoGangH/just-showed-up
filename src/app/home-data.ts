@@ -76,7 +76,16 @@ export type HomeData =
       error: string | null;
     };
 
-export async function getHomeData(activeGroupId?: string): Promise<HomeData> {
+function getSafeSelectedWeek(value: string | undefined) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return getCurrentWeekStart();
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? getCurrentWeekStart() : value;
+}
+
+export async function getHomeData(activeGroupId?: string, selectedWeekInput?: string): Promise<HomeData> {
   if (!hasSupabaseConfig()) {
     return {
       configured: false,
@@ -220,12 +229,16 @@ export async function getHomeData(activeGroupId?: string): Promise<HomeData> {
   let postError: string | null = null;
 
   if (activeGroup) {
+    const currentWeekStart = getCurrentWeekStart();
+    const selectedWeek = getSafeSelectedWeek(selectedWeekInput);
+    const weeksToFetch = Array.from(new Set([currentWeekStart, selectedWeek]));
     const { data: postData, error: weeklyPostError } = await supabase
       .from("weekly_posts")
       .select(
         "id,title,body_markdown,feedback_question,created_at,author_id,week_start,post_links(id,url,title,site_name),anonymous_comments(id),anonymous_reactions(id)",
       )
       .eq("group_id", activeGroup.id)
+      .in("week_start", weeksToFetch)
       .order("week_start", { ascending: false })
       .order("created_at", { ascending: false });
 

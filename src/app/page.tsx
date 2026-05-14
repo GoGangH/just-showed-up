@@ -34,19 +34,26 @@ export default async function Home({ searchParams }: HomeProps) {
   const { group, invite, modal, next, week } = await searchParams;
   const requestHeaders = await headers();
   const origin = getRequestOrigin(requestHeaders);
-  const homeData = await getHomeData(group);
+  const selectedWeek = week ?? getCurrentWeekStart();
+  const homeData = await getHomeData(group, selectedWeek);
   const activeGroup = group ? homeData.groups.find((item) => item.id === group) ?? null : null;
   const isSignedIn = Boolean(homeData.user);
   const displayName =
     homeData.user?.name ?? homeData.user?.email?.split("@")[0] ?? "사용자";
-  const notificationData = homeData.user
-    ? await getHeaderNotifications(await createClient(), homeData.user.id)
-    : { notifications: [], unreadCount: 0 };
-  const rescheduleOverview =
+  const [notificationData, rescheduleOverview] = await Promise.all([
+    homeData.user
+      ? getHeaderNotifications(await createClient(), homeData.user.id)
+      : Promise.resolve({ notifications: [], unreadCount: 0 }),
     homeData.user && activeGroup
-      ? await getRescheduleOverview(activeGroup.id)
-      : { availability: [], reason: null, responderCount: 0, scheduledAt: null, status: "none" as const };
-  const selectedWeek = week ?? getCurrentWeekStart();
+      ? getRescheduleOverview(activeGroup.id)
+      : Promise.resolve({
+          availability: [],
+          reason: null,
+          responderCount: 0,
+          scheduledAt: null,
+          status: "none" as const,
+        }),
+  ]);
   const currentPath = activeGroup ? `/?group=${activeGroup.id}&week=${selectedWeek}` : "/";
   const loginNextPath = getSafeRedirectPath(next, currentPath);
 
