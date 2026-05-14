@@ -199,6 +199,28 @@ async function validatePostWeek({
   return null;
 }
 
+async function getFeedbackPostForMember({
+  postId,
+  supabase,
+}: {
+  postId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any;
+}) {
+  const { data } = await supabase
+    .from("weekly_posts")
+    .select("id,group_id,author_id,title")
+    .eq("id", postId)
+    .single();
+
+  return data as {
+    author_id: string;
+    group_id: string;
+    id: string;
+    title: string;
+  } | null;
+}
+
 async function uploadPostAttachments({
   attachments: files,
   groupId,
@@ -423,6 +445,16 @@ export async function createAnonymousCommentAction(
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const post = await getFeedbackPostForMember({ postId, supabase });
+  if (!post) {
+    return { error: "댓글을 남길 수 있는 그룹 멤버인지 확인하지 못했습니다." };
+  }
+
   const payload: AnonymousCommentInsert = {
     post_id: postId,
     body,
@@ -433,19 +465,7 @@ export async function createAnonymousCommentAction(
     return { error: "댓글을 저장하지 못했습니다. 그룹 권한과 DB 설정을 확인해주세요." };
   }
 
-  const { data: postData } = await supabase
-    .from("weekly_posts")
-    .select("id,group_id,author_id,title")
-    .eq("id", postId)
-    .single();
-  const post = postData as {
-    author_id: string;
-    group_id: string;
-    id: string;
-    title: string;
-  } | null;
-
-  if (post && post.author_id !== user?.id) {
+  if (post.author_id !== user.id) {
     await notifyUser(supabase, {
       actor_id: null,
       body: post.title,
@@ -715,6 +735,19 @@ export async function createAnonymousReactionAction(formData: FormData) {
   }
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(buildLoginHref(`/posts/${postId}`) as never);
+  }
+
+  const post = await getFeedbackPostForMember({ postId, supabase });
+  if (!post) {
+    redirect(`/posts/${postId}`);
+  }
+
   const payload: AnonymousReactionInsert = {
     post_id: postId,
     reaction_type: reactionType as AnonymousReactionInsert["reaction_type"],
