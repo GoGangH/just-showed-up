@@ -13,6 +13,7 @@ import { RescheduleForm } from "@/app/sessions/reschedule/RescheduleForm";
 import { getHeaderNotifications } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentWeekStart } from "@/lib/dates/week";
+import { getRequestOrigin } from "@/lib/site-url";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { headers } from "next/headers";
@@ -30,11 +31,7 @@ type HomeProps = {
 export default async function Home({ searchParams }: HomeProps) {
   const { group, invite, modal, week } = await searchParams;
   const requestHeaders = await headers();
-  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "127.0.0.1:3000";
-  const protocol =
-    requestHeaders.get("x-forwarded-proto") ??
-    (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
-  const origin = `${protocol}://${host}`;
+  const origin = getRequestOrigin(requestHeaders);
   const homeData = await getHomeData(group);
   const activeGroup = group ? homeData.groups.find((item) => item.id === group) ?? null : null;
   const isSignedIn = Boolean(homeData.user);

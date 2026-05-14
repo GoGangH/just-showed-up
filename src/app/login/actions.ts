@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import type { Provider } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
+import { getRequestOrigin } from "@/lib/site-url";
 
 export type AuthFormState = {
   error?: string;
@@ -26,7 +27,7 @@ export async function oauthSignInAction(
   }
 
   const headersList = await headers();
-  const origin = headersList.get("origin") ?? "http://127.0.0.1:3000";
+  const origin = getRequestOrigin(headersList);
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: provider as Provider,

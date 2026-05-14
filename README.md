@@ -30,14 +30,20 @@ bun run dev
 ```
 
 Supabase 프로젝트를 만든 뒤 `.env.local`에 값을 채우고 `supabase/migrations`의 SQL을 적용합니다.
+배포 환경에서는 `NEXT_PUBLIC_SITE_URL`을 실제 서비스 주소로 설정합니다.
+
+```text
+NEXT_PUBLIC_SITE_URL=https://just-showed-up.vercel.app
+```
 
 ## Supabase Setup
 
 1. Supabase SQL Editor에서 `supabase/migrations/0001_initial_schema.sql` 내용을 실행합니다.
-2. Authentication URL 설정에 로컬 콜백 URL을 추가합니다.
+2. Authentication URL 설정에 로컬/프로덕션 콜백 URL을 추가합니다.
 
 ```text
 http://127.0.0.1:3000/auth/callback
+https://just-showed-up.vercel.app/auth/callback
 ```
 
 3. Authentication > Providers에서 사용할 OAuth provider를 활성화합니다.
