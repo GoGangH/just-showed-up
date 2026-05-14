@@ -1,6 +1,7 @@
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentWeekStart } from "@/lib/dates/week";
+import { getProfileDisplayName } from "@/lib/profiles";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type HomeMember = {
@@ -112,16 +113,7 @@ export async function getHomeData(activeGroupId?: string, selectedWeekInput?: st
     };
   }
 
-  const profileName =
-    String(user.user_metadata.name ?? user.user_metadata.full_name ?? user.user_metadata.nickname ?? "")
-      .trim() ||
-    user.email?.split("@")[0] ||
-    "사용자";
-
-  await supabase.from("profiles").upsert({
-    id: user.id,
-    nickname: profileName.slice(0, 30),
-  } as never);
+  const profileName = getProfileDisplayName(user);
 
   const { data, error } = await supabase
     .from("groups")
@@ -137,14 +129,36 @@ export async function getHomeData(activeGroupId?: string, selectedWeekInput?: st
     currentUserRole: null,
     members: [],
   }));
+  let profiles = new Map<string, string>();
+  let posts: HomePost[] = [];
+  let postError: string | null = null;
 
   if (groupIds.length > 0) {
-    const { data: memberRows } = await supabase
-      .from("group_members")
-      .select("group_id,user_id,role")
-      .in("group_id", groupIds);
+    const activeGroupBase = activeGroupId
+      ? groupBases.find((group) => group.id === activeGroupId) ?? null
+      : null;
+    const currentWeekStart = getCurrentWeekStart();
+    const selectedWeek = getSafeSelectedWeek(selectedWeekInput);
+    const weeksToFetch = Array.from(new Set([currentWeekStart, selectedWeek]));
+    const [memberResult, activePostResult] = await Promise.all([
+      supabase
+        .from("group_members")
+        .select("group_id,user_id,role")
+        .in("group_id", groupIds),
+      activeGroupBase
+        ? supabase
+            .from("weekly_posts")
+            .select(
+              "id,title,body_markdown,feedback_question,created_at,author_id,week_start,post_links(id,url,title,site_name),anonymous_comments(id),anonymous_reactions(id)",
+            )
+            .eq("group_id", activeGroupBase.id)
+            .in("week_start", weeksToFetch)
+            .order("week_start", { ascending: false })
+            .order("created_at", { ascending: false })
+        : Promise.resolve({ data: [], error: null }),
+    ]);
 
-    const members = (memberRows ?? []) as {
+    const members = (memberResult.data ?? []) as {
       group_id: string;
       role: "owner" | "member";
       user_id: string;
@@ -159,7 +173,7 @@ export async function getHomeData(activeGroupId?: string, selectedWeekInput?: st
     ]);
     const profileRows = profileResult.data;
 
-    const profiles = new Map(
+    profiles = new Map(
       ((profileRows ?? []) as { id: string; nickname: string }[]).map((profile) => [
         profile.id,
         profile.nickname,
@@ -167,9 +181,6 @@ export async function getHomeData(activeGroupId?: string, selectedWeekInput?: st
     );
 
     const weeklyPostRows = weeklyPostResult.data;
-
-    const currentWeekStart = getCurrentWeekStart();
-
     const postedKeys = new Set(
       ((weeklyPostRows ?? []) as { group_id: string; author_id: string; week_start: string }[])
         .filter((post) => post.week_start === currentWeekStart)
@@ -220,49 +231,20 @@ export async function getHomeData(activeGroupId?: string, selectedWeekInput?: st
           };
         }),
     }));
+
+    const rows = (activePostResult.data ?? []) as Omit<HomePost, "author">[];
+    posts = rows.map((post) => ({
+      ...post,
+      author: { nickname: profiles.get(post.author_id) ?? "작성자" },
+    }));
+    postError = activePostResult.error
+      ? `공유글 정보를 불러오지 못했습니다. ${activePostResult.error.message}`
+      : null;
   }
 
   const activeGroup = activeGroupId
     ? groups.find((group) => group.id === activeGroupId) ?? null
     : null;
-  let posts: HomePost[] = [];
-  let postError: string | null = null;
-
-  if (activeGroup) {
-    const currentWeekStart = getCurrentWeekStart();
-    const selectedWeek = getSafeSelectedWeek(selectedWeekInput);
-    const weeksToFetch = Array.from(new Set([currentWeekStart, selectedWeek]));
-    const { data: postData, error: weeklyPostError } = await supabase
-      .from("weekly_posts")
-      .select(
-        "id,title,body_markdown,feedback_question,created_at,author_id,week_start,post_links(id,url,title,site_name),anonymous_comments(id),anonymous_reactions(id)",
-      )
-      .eq("group_id", activeGroup.id)
-      .in("week_start", weeksToFetch)
-      .order("week_start", { ascending: false })
-      .order("created_at", { ascending: false });
-
-    const rows = (postData ?? []) as Omit<HomePost, "author">[];
-    const authorIds = Array.from(new Set(rows.map((post) => post.author_id)));
-    const { data: authorRows } =
-      authorIds.length > 0
-        ? await supabase.from("profiles").select("id,nickname").in("id", authorIds)
-        : { data: [] };
-    const authors = new Map(
-      ((authorRows ?? []) as { id: string; nickname: string }[]).map((author) => [
-        author.id,
-        author.nickname,
-      ]),
-    );
-
-    posts = rows.map((post) => ({
-      ...post,
-      author: { nickname: authors.get(post.author_id) ?? "작성자" },
-    }));
-    postError = weeklyPostError
-      ? `공유글 정보를 불러오지 못했습니다. ${weeklyPostError.message}`
-      : null;
-  }
 
   return {
     configured: true,

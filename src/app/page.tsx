@@ -41,12 +41,13 @@ export default async function Home({ searchParams }: HomeProps) {
   const isSignedIn = Boolean(homeData.user);
   const displayName =
     homeData.user?.name ?? homeData.user?.email?.split("@")[0] ?? "사용자";
+  const sharedSupabase = homeData.user ? await createClient() : null;
   const [notificationData, rescheduleOverview] = await Promise.all([
-    homeData.user
-      ? getHeaderNotifications(await createClient(), homeData.user.id)
+    homeData.user && sharedSupabase
+      ? getHeaderNotifications(sharedSupabase, homeData.user.id)
       : Promise.resolve({ notifications: [], unreadCount: 0 }),
-    homeData.user && activeGroup
-      ? getRescheduleOverview(activeGroup.id)
+    homeData.user && activeGroup && sharedSupabase
+      ? getRescheduleOverview(activeGroup.id, { supabase: sharedSupabase, userId: homeData.user.id })
       : Promise.resolve({
           availability: [],
           reason: null,

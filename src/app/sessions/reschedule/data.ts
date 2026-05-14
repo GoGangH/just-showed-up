@@ -2,6 +2,8 @@ import { getCurrentWeekStart } from "@/lib/dates/week";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
+type AppSupabaseClient = Awaited<ReturnType<typeof createClient>>;
+
 export type AvailabilitySummary = {
   startsAt: string;
   count: number;
@@ -16,17 +18,25 @@ export type RescheduleOverview = {
   status: "none" | "scheduled" | "rescheduling" | "confirmed" | "cancelled" | "completed";
 };
 
-export async function getRescheduleOverview(groupId: string): Promise<RescheduleOverview> {
+export async function getRescheduleOverview(
+  groupId: string,
+  options: { supabase?: AppSupabaseClient; userId?: string | null } = {},
+): Promise<RescheduleOverview> {
   if (!hasSupabaseConfig()) {
     return { availability: [], reason: null, responderCount: 0, scheduledAt: null, status: "none" };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = options.supabase ?? await createClient();
+  let userId = options.userId ?? null;
 
-  if (!user) return { availability: [], reason: null, responderCount: 0, scheduledAt: null, status: "none" };
+  if (!userId) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    userId = user?.id ?? null;
+  }
+
+  if (!userId) return { availability: [], reason: null, responderCount: 0, scheduledAt: null, status: "none" };
 
   const { data: sessionData } = await supabase
     .from("study_sessions")
@@ -76,7 +86,7 @@ export async function getRescheduleOverview(groupId: string): Promise<Reschedule
   ((availabilityRows ?? []) as { slot_id: string; user_id: string }[]).forEach((availability) => {
     counts.set(availability.slot_id, (counts.get(availability.slot_id) ?? 0) + 1);
     responders.add(availability.user_id);
-    if (availability.user_id === user.id) {
+    if (availability.user_id === userId) {
       mySlots.add(availability.slot_id);
     }
   });
