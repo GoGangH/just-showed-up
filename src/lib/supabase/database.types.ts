@@ -252,6 +252,10 @@ export type Database = {
         Args: { code: string };
         Returns: string;
       };
+      leave_group: {
+        Args: { target_group_id: string };
+        Returns: void;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

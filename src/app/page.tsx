@@ -6,6 +6,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { GroupJoinForm } from "@/app/groups/join/GroupJoinForm";
 import { GroupCreateForm } from "@/app/groups/new/GroupCreateForm";
+import { GroupLeaveForm } from "@/app/groups/leave/GroupLeaveForm";
 import { GroupSettingsForm } from "@/app/groups/settings/GroupSettingsForm";
 import { LoginForm } from "@/app/login/LoginForm";
 import { getRescheduleOverview } from "@/app/sessions/reschedule/data";
@@ -323,6 +324,9 @@ export default async function Home({ searchParams }: HomeProps) {
             >
               로그아웃
             </Link>
+            {activeGroup ? (
+              <GroupLeaveForm groupId={activeGroup.id} groupName={activeGroup.name} />
+            ) : null}
           </div>
         </AppModal>
       ) : null}

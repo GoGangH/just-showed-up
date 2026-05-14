@@ -168,3 +168,45 @@ export async function updateGroupSettingsAction(
   const weekQuery = week ? `&week=${encodeURIComponent(week)}` : "";
   redirect(`/?group=${groupId}${weekQuery}`);
 }
+
+export async function leaveGroupAction(
+  _: GroupFormState,
+  formData: FormData,
+): Promise<GroupFormState> {
+  if (!hasSupabaseConfig()) {
+    return { error: "Supabase 환경변수를 먼저 설정해주세요." };
+  }
+
+  const groupId = String(formData.get("group_id") ?? "").trim();
+  const confirmLeave = String(formData.get("confirm_leave") ?? "") === "yes";
+
+  if (!groupId) {
+    return { error: "탈퇴할 그룹을 찾지 못했습니다." };
+  }
+
+  if (!confirmLeave) {
+    return { error: "탈퇴 확인에 체크해주세요." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const { error } = await supabase.rpc("leave_group", { target_group_id: groupId } as never);
+
+  if (error) {
+    return {
+      error:
+        error.message === "last owner cannot leave"
+          ? "마지막 그룹장은 탈퇴할 수 없습니다. 먼저 그룹장을 위임하거나 그룹 삭제 기능을 사용해야 합니다."
+          : "그룹에서 나가지 못했습니다. 멤버 권한과 DB migration 적용 여부를 확인해주세요.",
+    };
+  }
+
+  redirect("/");
+}
