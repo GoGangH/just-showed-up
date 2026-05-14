@@ -60,7 +60,10 @@ export async function notifyGroupMembers(
     .select("user_id")
     .eq("group_id", input.groupId);
 
-  if (memberError) return;
+  if (memberError) {
+    console.error("Failed to load notification recipients", memberError);
+    return;
+  }
 
   const excluded = new Set(input.excludeUserIds ?? []);
   const notifications: NotificationInsert[] = ((memberRows ?? []) as { user_id: string }[])
@@ -77,12 +80,18 @@ export async function notifyGroupMembers(
 
   if (notifications.length === 0) return;
 
-  await supabase.from("notifications").insert(notifications as never);
+  const { error } = await supabase.from("notifications").insert(notifications as never);
+  if (error) {
+    console.error("Failed to create group notifications", error);
+  }
 }
 
 export async function notifyUser(
   supabase: AppSupabaseClient,
   notification: NotificationInsert,
 ) {
-  await supabase.from("notifications").insert(notification as never);
+  const { error } = await supabase.from("notifications").insert(notification as never);
+  if (error) {
+    console.error("Failed to create user notification", error);
+  }
 }
