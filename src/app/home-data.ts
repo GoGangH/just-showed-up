@@ -86,6 +86,36 @@ function getSafeSelectedWeek(value: string | undefined) {
   return Number.isNaN(date.getTime()) ? getCurrentWeekStart() : value;
 }
 
+function addWeeks(weekStart: string, amount: number) {
+  const [year, month, day] = weekStart.split("-").map(Number);
+  if (!year || !month || !day) return weekStart;
+
+  const date = new Date(year, month - 1, day, 12, 0, 0, 0);
+  date.setDate(date.getDate() + amount * 7);
+
+  const nextYear = date.getFullYear();
+  const nextMonth = String(date.getMonth() + 1).padStart(2, "0");
+  const nextDay = String(date.getDate()).padStart(2, "0");
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+}
+
+function getWeekStart(value: string) {
+  return getCurrentWeekStart(new Date(value));
+}
+
+function getWeeksBetween(startWeek: string, endWeek: string) {
+  const weeks: string[] = [];
+  const cursor = new Date(`${startWeek}T00:00:00`);
+  const end = new Date(`${endWeek}T00:00:00`);
+
+  while (cursor <= end) {
+    weeks.push(cursor.toISOString().slice(0, 10));
+    cursor.setDate(cursor.getDate() + 7);
+  }
+
+  return weeks;
+}
+
 export async function getHomeData(
   activeGroupId?: string,
   selectedWeekInput?: string,
@@ -144,6 +174,10 @@ export async function getHomeData(
       : null;
     const currentWeekStart = getCurrentWeekStart();
     const selectedWeek = getSafeSelectedWeek(selectedWeekInput);
+    const studyStartWeek = groupBases.reduce((earliest, group) => {
+      const groupStartWeek = getWeekStart(group.created_at);
+      return groupStartWeek < earliest ? groupStartWeek : earliest;
+    }, currentWeekStart);
     const weeksToFetch = Array.from(new Set([currentWeekStart, selectedWeek]));
     const [memberResult, activePostResult] = await Promise.all([
       supabase
@@ -174,7 +208,12 @@ export async function getHomeData(
       userIds.length > 0
         ? supabase.from("profiles").select("id,nickname").in("id", userIds)
         : Promise.resolve({ data: [] }),
-      supabase.from("weekly_posts").select("group_id,author_id,week_start").in("group_id", groupIds),
+      supabase
+        .from("weekly_posts")
+        .select("group_id,author_id,week_start")
+        .in("group_id", groupIds)
+        .gte("week_start", studyStartWeek)
+        .lt("week_start", addWeeks(currentWeekStart, 1)),
     ]);
     const profileRows = profileResult.data;
 
@@ -196,23 +235,6 @@ export async function getHomeData(
         (post) => `${post.group_id}:${post.author_id}:${post.week_start}`,
       ),
     );
-
-    function getWeekStart(value: string) {
-      return getCurrentWeekStart(new Date(value));
-    }
-
-    function getWeeksBetween(startWeek: string, endWeek: string) {
-      const weeks: string[] = [];
-      const cursor = new Date(`${startWeek}T00:00:00`);
-      const end = new Date(`${endWeek}T00:00:00`);
-
-      while (cursor <= end) {
-        weeks.push(cursor.toISOString().slice(0, 10));
-        cursor.setDate(cursor.getDate() + 7);
-      }
-
-      return weeks;
-    }
 
     groups = groupBases.map((group) => ({
       ...group,

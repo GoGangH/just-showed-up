@@ -28,19 +28,12 @@ export async function getHeaderNotifications(supabase: AppSupabaseClient, userId
     return { notifications: [], unreadCount: 0 };
   }
 
-  const [listResult, unreadResult] = await Promise.all([
-    supabase
-      .from("notifications")
-      .select("id,title,body,href,read_at,created_at,type")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(10),
-    supabase
-      .from("notifications")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .is("read_at", null),
-  ]);
+  const listResult = await supabase
+    .from("notifications")
+    .select("id,title,body,href,read_at,created_at,type")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(10);
 
   if (listResult.error) {
     return { notifications: [], unreadCount: 0 };
@@ -49,9 +42,7 @@ export async function getHeaderNotifications(supabase: AppSupabaseClient, userId
   const notifications = (listResult.data ?? []) as HeaderNotification[];
   return {
     notifications,
-    unreadCount: unreadResult.error
-      ? notifications.filter((notification) => !notification.read_at).length
-      : unreadResult.count ?? 0,
+    unreadCount: notifications.filter((notification) => !notification.read_at).length,
   };
 }
 
