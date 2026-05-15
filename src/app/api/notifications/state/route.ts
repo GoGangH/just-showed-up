@@ -20,6 +20,7 @@ export async function GET() {
     .from("notifications")
     .select("id,read_at,created_at")
     .eq("user_id", user.id)
+    .is("read_at", null)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

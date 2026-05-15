@@ -756,45 +756,6 @@ export async function deleteWeeklyPostAction(formData: FormData) {
 }
 
 export async function createAnonymousReactionAction(formData: FormData) {
-  if (!hasSupabaseConfig()) {
-    return;
-  }
-
   const postId = String(formData.get("post_id") ?? "").trim();
-  const reactionType = String(formData.get("reaction_type") ?? "").trim();
-  const allowedReactions: AnonymousReactionInsert["reaction_type"][] = [
-    "helpful",
-    "relate",
-    "cheer",
-    "curious",
-    "join",
-  ];
-
-  if (!postId || !allowedReactions.includes(reactionType as AnonymousReactionInsert["reaction_type"])) {
-    return;
-  }
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect(buildLoginHref(`/posts/${postId}`) as never);
-  }
-
-  const post = await getFeedbackPostForMember({ postId, supabase });
-  if (!post) {
-    redirect(`/posts/${postId}`);
-  }
-
-  const payload: AnonymousReactionInsert = {
-    post_id: postId,
-    reaction_type: reactionType as AnonymousReactionInsert["reaction_type"],
-  };
-
-  await supabase.from("anonymous_reactions").insert(payload as never);
-  revalidatePost(postId);
-  revalidateGroup(post.group_id);
   redirect(`/posts/${postId}`);
 }

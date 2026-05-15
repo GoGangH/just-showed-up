@@ -32,6 +32,7 @@ export async function getHeaderNotifications(supabase: AppSupabaseClient, userId
     .from("notifications")
     .select("id,title,body,href,read_at,created_at,type")
     .eq("user_id", userId)
+    .is("read_at", null)
     .order("created_at", { ascending: false })
     .limit(10);
 

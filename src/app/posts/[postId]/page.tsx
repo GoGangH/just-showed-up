@@ -6,7 +6,7 @@ import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { MarkdownViewer } from "@/components/markdown/MarkdownViewer";
 import type { Database } from "@/lib/supabase/database.types";
 import { CommentForm } from "./CommentForm";
-import { getReactionLabel, ReactionBar } from "./ReactionBar";
+import { ReactionBar } from "./ReactionBar";
 
 type PageProps = {
   params: Promise<{
@@ -255,23 +255,14 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
         </article>
 
         <section className="rounded-lg border border-neutral-200 bg-white p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-neutral-500">익명 반응</p>
-              <p className="mt-1 text-sm text-neutral-600">
-                반응에는 작성자 정보가 저장되지 않습니다.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 text-sm text-neutral-600">
-              {Object.entries(reactionCounts).map(([type, count]) => (
-                <span className="rounded-md bg-neutral-100 px-2 py-1" key={type}>
-                  {getReactionLabel(type)} {count}
-                </span>
-              ))}
-            </div>
+          <div>
+            <p className="text-sm font-semibold text-neutral-500">익명 반응</p>
+            <p className="mt-1 text-sm text-neutral-600">
+              반응에는 작성자 정보가 저장되지 않습니다.
+            </p>
           </div>
           <div className="mt-4">
-            <ReactionBar postId={post.id} />
+            <ReactionBar initialCounts={reactionCounts} postId={post.id} />
           </div>
         </section>
 
