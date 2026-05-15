@@ -17,8 +17,8 @@ import {
   getNextWeeklyMeetingDate,
   getWeeklyMeetingDateForKstWeek,
 } from "@/lib/dates/kst";
-import Link from "next/link";
 import { ModalTrigger } from "@/components/ModalTrigger";
+import { PrefetchRouteLink } from "@/components/PrefetchRouteLink";
 import { RemainingTime } from "./RemainingTime";
 
 const weekdays = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
@@ -191,7 +191,7 @@ export function GroupWorkspace({
     (sum, post) => sum + post.anonymous_reactions.length,
     0,
   );
-  const groupWeekHref = `/?group=${group.id}&week=${visibleWeek}`;
+  const groupWeekHref = `/groups/${group.id}?week=${visibleWeek}`;
   const weekStatusLabel = visibleWeek === currentWeek ? "이번 주" : "선택한 주차";
   const previousWeek = addWeeks(visibleWeek, -1);
   const nextWeek = addWeeks(visibleWeek, 1);
@@ -251,13 +251,14 @@ export function GroupWorkspace({
   return (
     <div className="space-y-6">
       <section className="border-b border-neutral-200 pb-6">
-        <Link
+        <PrefetchRouteLink
           className="inline-flex items-center gap-1 text-sm font-semibold text-neutral-500 hover:text-neutral-900"
           href="/"
+          prefetchOnMount
         >
           <ChevronLeft size={16} />
           스터디 목록
-        </Link>
+        </PrefetchRouteLink>
 
         <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -405,13 +406,14 @@ export function GroupWorkspace({
           </div>
           <div className="flex items-center gap-2 pb-1">
             {canGoPrevious ? (
-              <Link
+              <PrefetchRouteLink
                 aria-label="이전 주"
                 className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
-                href={`/?group=${group.id}&week=${previousWeek}`}
+                href={`/groups/${group.id}?week=${previousWeek}`}
+                prefetchOnMount
               >
                 <ChevronLeft size={15} />
-              </Link>
+              </PrefetchRouteLink>
             ) : (
               <span
                 aria-label="이전 주 없음"
@@ -424,13 +426,14 @@ export function GroupWorkspace({
               {formatWeekHeading(visibleWeek)}
             </div>
             {canGoNext ? (
-              <Link
+              <PrefetchRouteLink
                 aria-label="다음 주"
                 className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
-                href={`/?group=${group.id}&week=${nextWeek}`}
+                href={`/groups/${group.id}?week=${nextWeek}`}
+                prefetchOnMount
               >
                 <ChevronRight size={15} />
-              </Link>
+              </PrefetchRouteLink>
             ) : (
               <span
                 aria-label="다음 주 없음"
@@ -458,10 +461,10 @@ export function GroupWorkspace({
                 key={member.userId}
               >
                 {postHref ? (
-                  <Link
+                  <PrefetchRouteLink
                     aria-label={`${member.nickname} 공유글 보기`}
                     className="absolute inset-0 z-10 rounded-lg"
-                    href={postHref as never}
+                    href={postHref}
                   />
                 ) : null}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -485,7 +488,7 @@ export function GroupWorkspace({
                   </div>
 
                   {isMe ? (
-                    <Link
+                    <PrefetchRouteLink
                       className={`pointer-events-auto relative z-30 rounded-md px-3 py-2 text-center text-sm font-semibold ${
                         post
                           ? "border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-900"
@@ -494,7 +497,7 @@ export function GroupWorkspace({
                       href={post ? `/posts/${post.id}/edit` : `/posts/new?group=${group.id}&week=${visibleWeek}`}
                     >
                       {post ? "수정" : "작성"}
-                    </Link>
+                    </PrefetchRouteLink>
                   ) : null}
                 </div>
 

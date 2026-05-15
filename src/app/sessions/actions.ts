@@ -129,7 +129,7 @@ export async function startRescheduleAction(
       supabase,
       userId: user.id,
     });
-    redirect(`/?group=${groupId}`);
+    redirect(`/groups/${groupId}`);
   }
 
   const { data: existingSlotData, error: existingSlotError } = await supabase
@@ -202,12 +202,12 @@ export async function startRescheduleAction(
     body: "이번 주 가능한 시간을 선택해주세요.",
     excludeUserIds: [user.id],
     groupId,
-    href: `/?group=${groupId}&modal=reschedule`,
+    href: `/groups/${groupId}?modal=reschedule`,
     title: "일정 재조율 응답이 필요합니다",
     type: "reschedule_vote_needed",
   });
 
-  redirect(`/?group=${groupId}`);
+  redirect(`/groups/${groupId}`);
 }
 
 async function notifyRescheduleCompletedIfNeeded({
@@ -242,7 +242,7 @@ async function notifyRescheduleCompletedIfNeeded({
     actorId: userId,
     body: "모든 멤버가 이번 주 가능한 시간을 제출했습니다.",
     groupId,
-    href: `/?group=${groupId}&modal=reschedule`,
+    href: `/groups/${groupId}?modal=reschedule`,
     title: "일정 재조율 응답이 완료되었습니다",
     type: "reschedule_vote_completed",
   });
@@ -317,10 +317,10 @@ export async function confirmRescheduleAction(formData: FormData) {
     }),
     excludeUserIds: [user.id],
     groupId,
-    href: `/?group=${groupId}`,
+    href: `/groups/${groupId}`,
     title: "이번 주 일정이 확정되었습니다",
     type: "schedule_confirmed",
   });
 
-  redirect(`/?group=${groupId}`);
+  redirect(`/groups/${groupId}`);
 }

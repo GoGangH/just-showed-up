@@ -1,3 +1,5 @@
+"use client";
+
 import { ChevronDown, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
 import { openAppModal } from "@/components/ModalTrigger";

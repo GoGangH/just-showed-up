@@ -97,7 +97,7 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
   };
   const isAuthor = user?.id === post.author_id;
   const reactionCounts = countReactions(post);
-  const backHref = safeInternalHref(from) ?? `/?group=${post.group_id}&week=${post.week_start}`;
+  const backHref = safeInternalHref(from) ?? `/groups/${post.group_id}?week=${post.week_start}`;
   const imageAttachments = post.post_attachments.filter((attachment) =>
     attachment.file_type.startsWith("image/"),
   );

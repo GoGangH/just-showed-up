@@ -86,7 +86,7 @@ export default async function NewPostPage({ searchParams }: NewPostPageProps) {
               </Link>
               <Link
                 className="rounded-md border border-amber-300 bg-white px-4 py-2 text-center text-sm font-semibold text-amber-900"
-                href={`/?group=${group}&week=${weekStart}`}
+                href={`/groups/${group}?week=${weekStart}`}
               >
                 그룹으로 돌아가기
               </Link>

@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { Clock3, MapPin, UsersRound } from "lucide-react";
 import type { HomeGroup } from "@/app/home-data";
 import { getNextWeeklyMeetingDate } from "@/lib/dates/kst";
 import { ModalTrigger } from "@/components/ModalTrigger";
+import { PrefetchRouteLink } from "@/components/PrefetchRouteLink";
 import { RemainingTime } from "./RemainingTime";
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
@@ -107,12 +107,13 @@ export function GroupList({
           const nextMeeting = getNextMeeting(group);
 
           return (
-            <Link
+            <PrefetchRouteLink
               className={`block rounded-lg border bg-white p-5 transition hover:border-neutral-400 ${
                 isActive ? "border-neutral-900" : "border-neutral-200"
               }`}
-              href={`/?group=${group.id}`}
+              href={`/groups/${group.id}`}
               key={group.id}
+              prefetchOnMount
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -161,7 +162,7 @@ export function GroupList({
                   {postedCount}/{group.members.length} 작성
                 </p>
               </div>
-            </Link>
+            </PrefetchRouteLink>
           );
         })}
       </div>

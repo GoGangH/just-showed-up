@@ -69,7 +69,7 @@ export async function createGroupAction(
     return { error: "그룹을 만들지 못했습니다. 그룹 권한과 DB 설정을 확인해주세요." };
   }
 
-  redirect(`/?group=${payload.id}`);
+  redirect(`/groups/${payload.id}`);
 }
 
 export async function joinGroupAction(
@@ -101,7 +101,7 @@ export async function joinGroupAction(
     return { error: "초대 코드를 확인해주세요." };
   }
 
-  redirect(`/?group=${groupId}`);
+  redirect(`/groups/${groupId}`);
 }
 
 export async function updateGroupSettingsAction(
@@ -165,8 +165,8 @@ export async function updateGroupSettingsAction(
     return { error: "그룹 정보를 수정하지 못했습니다. 권한과 DB 설정을 확인해주세요." };
   }
 
-  const weekQuery = week ? `&week=${encodeURIComponent(week)}` : "";
-  redirect(`/?group=${groupId}${weekQuery}`);
+  const weekQuery = week ? `?week=${encodeURIComponent(week)}` : "";
+  redirect(`/groups/${groupId}${weekQuery}`);
 }
 
 export async function leaveGroupAction(
@@ -264,6 +264,6 @@ export async function transferGroupOwnershipAction(
   }
 
   redirect(
-    `/?group=${groupId}${week ? `&week=${encodeURIComponent(week)}` : ""}&modal=group-settings`,
+    `/groups/${groupId}${week ? `?week=${encodeURIComponent(week)}&modal=group-settings` : "?modal=group-settings"}`,
   );
 }

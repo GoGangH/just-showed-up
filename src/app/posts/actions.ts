@@ -732,7 +732,7 @@ export async function deleteWeeklyPostAction(formData: FormData) {
 
   await supabase.from("weekly_posts").delete().eq("id", post.id).eq("author_id", user.id);
 
-  redirect(`/?group=${post.group_id}&week=${post.week_start}`);
+  redirect(`/groups/${post.group_id}?week=${post.week_start}`);
 }
 
 export async function createAnonymousReactionAction(formData: FormData) {

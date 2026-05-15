@@ -1,18 +1,11 @@
+import { AppHeader } from "@/components/AppHeader";
 import { ClientHomeModals } from "@/components/ClientHomeModals";
 import { GroupList } from "@/components/GroupList";
-import { GroupWorkspace } from "@/components/GroupWorkspace";
 import { ModalTrigger } from "@/components/ModalTrigger";
-import { NotificationBell } from "@/components/NotificationBell";
-import { ProfileMenu } from "@/components/ProfileMenu";
-import { getRescheduleOverview } from "@/app/sessions/reschedule/data";
 import { getHeaderNotifications } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentWeekStart } from "@/lib/dates/week";
 import { getSafeRedirectPath } from "@/lib/redirects";
-import { getRequestOrigin } from "@/lib/site-url";
-import { Plus } from "lucide-react";
-import Link from "next/link";
-import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { getHomeData } from "./home-data";
 
 type HomeProps = {
@@ -27,94 +20,46 @@ type HomeProps = {
 
 export default async function Home({ searchParams }: HomeProps) {
   const { group, invite, modal, next, week } = await searchParams;
-  const requestHeaders = await headers();
-  const origin = getRequestOrigin(requestHeaders);
-  const selectedWeek = week ?? getCurrentWeekStart();
-  const includeActivePosts = true;
-  const homeData = await getHomeData(group, selectedWeek, { includeActivePosts });
-  const activeGroup = group ? homeData.groups.find((item) => item.id === group) ?? null : null;
+  if (group) {
+    const nextParams = new URLSearchParams();
+    if (week) nextParams.set("week", week);
+    if (modal) nextParams.set("modal", modal);
+    if (invite) nextParams.set("invite", invite);
+    const query = nextParams.size > 0 ? `?${nextParams.toString()}` : "";
+    redirect(`/groups/${group}${query}`);
+  }
+
+  const homeData = await getHomeData(undefined, undefined, { includeActivePosts: false });
   const isSignedIn = Boolean(homeData.user);
   const displayName =
     homeData.user?.name ?? homeData.user?.email?.split("@")[0] ?? "사용자";
   const sharedSupabase = homeData.user ? await createClient() : null;
-  const shouldLoadRescheduleOverview = Boolean(
-    homeData.user && activeGroup && (!modal || modal === "reschedule"),
-  );
-  const [notificationData, rescheduleOverview] = await Promise.all([
+  const notificationData =
     homeData.user && sharedSupabase
-      ? getHeaderNotifications(sharedSupabase, homeData.user.id)
-      : Promise.resolve({ notifications: [], unreadCount: 0 }),
-    shouldLoadRescheduleOverview && homeData.user && activeGroup && sharedSupabase
-      ? getRescheduleOverview(activeGroup.id, { supabase: sharedSupabase, userId: homeData.user.id })
-      : Promise.resolve({
-          availability: [],
-          reason: null,
-          responderCount: 0,
-          scheduledAt: null,
-          status: "none" as const,
-        }),
-  ]);
-  const currentPath = activeGroup ? `/?group=${activeGroup.id}&week=${selectedWeek}` : "/";
+      ? await getHeaderNotifications(sharedSupabase, homeData.user.id)
+      : { notifications: [], unreadCount: 0 };
+  const rescheduleOverview = {
+    availability: [],
+    reason: null,
+    responderCount: 0,
+    scheduledAt: null,
+    status: "none" as const,
+  };
+  const currentPath = "/";
   const loginNextPath = getSafeRedirectPath(next, currentPath);
-  const inviteUrl = activeGroup
-    ? `${origin}/?modal=join-group&invite=${encodeURIComponent(activeGroup.invite_code)}`
-    : null;
 
   return (
     <main className="min-h-screen">
-      <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <Link href="/">
-            <div>
-              <p className="text-xl font-bold">일단옴</p>
-              <p className="text-xs text-neutral-600">쉬었음청년 스터디</p>
-            </div>
-          </Link>
-          <div className="flex items-center gap-2">
-            {homeData.user ? (
-              <>
-                <ModalTrigger
-                  className="hidden rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900 sm:inline-flex"
-                  modal="new-group"
-                >
-                  그룹 만들기
-                </ModalTrigger>
-                <ModalTrigger
-                  className="hidden rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900 sm:inline-flex"
-                  modal="join-group"
-                >
-                  초대 참여
-                </ModalTrigger>
-                <NotificationBell
-                  notifications={notificationData.notifications}
-                  unreadCount={notificationData.unreadCount}
-                />
-                <ProfileMenu
-                  avatarUrl={homeData.user.avatarUrl}
-                  displayName={displayName}
-                />
-              </>
-            ) : (
-              <>
-                <ModalTrigger
-                  className="hidden items-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900 sm:inline-flex"
-                  modal="new-group"
-                >
-                  <Plus size={16} />
-                  그룹 만들기
-                </ModalTrigger>
-                <ModalTrigger className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-semibold text-white" modal="login">
-                  로그인
-                </ModalTrigger>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+      <AppHeader
+        avatarUrl={homeData.user?.avatarUrl}
+        displayName={displayName}
+        isSignedIn={isSignedIn}
+        notifications={notificationData.notifications}
+        unreadCount={notificationData.unreadCount}
+      />
 
       <div className="mx-auto max-w-6xl px-4 py-6 lg:px-8">
           <div className="space-y-6">
-            {!activeGroup ? (
             <section className="rounded-lg border border-neutral-200 bg-white p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -130,7 +75,6 @@ export default async function Home({ searchParams }: HomeProps) {
                 </div>
               </div>
             </section>
-            ) : null}
 
             {!homeData.configured ? (
               <section className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
@@ -171,35 +115,25 @@ export default async function Home({ searchParams }: HomeProps) {
               </section>
             ) : null}
 
-            {activeGroup ? (
-              <GroupWorkspace
-                currentUserId={homeData.user?.id ?? null}
-                group={activeGroup}
-                posts={homeData.posts}
-                rescheduleOverview={rescheduleOverview}
-                selectedWeek={selectedWeek}
-              />
-            ) : (
-              <GroupList
-                activeGroupId={null}
-                groups={homeData.groups}
-                isSignedIn={isSignedIn}
-              />
-            )}
+            <GroupList
+              activeGroupId={null}
+              groups={homeData.groups}
+              isSignedIn={isSignedIn}
+            />
           </div>
       </div>
 
       <ClientHomeModals
-        activeGroup={activeGroup}
+        activeGroup={null}
         closeHref={currentPath}
         currentUser={homeData.user}
         defaultInviteCode={invite ?? ""}
         displayName={displayName}
         initialModal={modal}
-        inviteUrl={inviteUrl}
+        inviteUrl={null}
         loginNextPath={loginNextPath}
         rescheduleOverview={rescheduleOverview}
-        selectedWeek={selectedWeek}
+        selectedWeek=""
       />
     </main>
   );
