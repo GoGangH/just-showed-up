@@ -18,6 +18,7 @@ import {
   getWeeklyMeetingDateForKstWeek,
 } from "@/lib/dates/kst";
 import Link from "next/link";
+import { RemainingTime } from "./RemainingTime";
 
 const weekdays = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
 
@@ -196,13 +197,20 @@ export function GroupWorkspace({
   const canGoPrevious = visibleWeek > studyStartWeek;
   const canGoNext = visibleWeek < previewLimitWeek;
   const isOwner = group.currentUserRole === "owner";
+  const nextMeeting = getNextMeetingDate(group);
   const detailsGrid = (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <div className="rounded-md bg-neutral-50 p-3">
         <p className="text-xs font-semibold text-neutral-500">모임</p>
         <p className="mt-1 text-sm font-semibold text-neutral-900">{formatMeeting(group)}</p>
         <p className="mt-1 text-xs text-neutral-500">
-          {formatRemainingMeeting(group)} · {formatLocation(group)}
+          <RemainingTime
+            fallback="모임까지 남은 시간 미정"
+            initialLabel={formatRemainingMeeting(group)}
+            prefix="모임까지 "
+            targetIso={nextMeeting?.toISOString() ?? null}
+          />{" "}
+          · {formatLocation(group)}
         </p>
       </div>
       <div className="rounded-md bg-neutral-50 p-3">

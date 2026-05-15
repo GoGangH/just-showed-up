@@ -3,6 +3,7 @@ import { Clock3, MapPin, UsersRound } from "lucide-react";
 import type { HomeGroup } from "@/app/home-data";
 import { getNextWeeklyMeetingDate } from "@/lib/dates/kst";
 import { buildLoginHref } from "@/lib/redirects";
+import { RemainingTime } from "./RemainingTime";
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -103,6 +104,7 @@ export function GroupList({
         {groups.map((group) => {
           const postedCount = group.members.filter((member) => member.postedThisWeek).length;
           const isActive = group.id === activeGroupId;
+          const nextMeeting = getNextMeeting(group);
 
           return (
             <Link
@@ -116,7 +118,12 @@ export function GroupList({
                 <div>
                   <p className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-1 text-xs font-semibold text-neutral-700">
                     <Clock3 size={13} />
-                    {formatRemaining(group)}
+                    <RemainingTime
+                      fallback="모임 시간 미정"
+                      initialLabel={formatRemaining(group)}
+                      suffix=" 남음"
+                      targetIso={nextMeeting?.toISOString() ?? null}
+                    />
                   </p>
                   <h3 className="mt-3 text-xl font-semibold">{group.name}</h3>
                   <p className="mt-2 text-sm text-neutral-600">{formatMeeting(group)}</p>
