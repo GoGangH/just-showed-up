@@ -12,6 +12,11 @@ import {
 import type { HomeGroup, HomePost } from "@/app/home-data";
 import type { RescheduleOverview } from "@/app/sessions/reschedule/data";
 import { confirmRescheduleAction } from "@/app/sessions/actions";
+import {
+  getCurrentKstWeekStart,
+  getNextWeeklyMeetingDate,
+  getWeeklyMeetingDateForKstWeek,
+} from "@/lib/dates/kst";
 import Link from "next/link";
 
 const weekdays = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
@@ -48,16 +53,7 @@ function formatWeekLabel(weekStart: string) {
 }
 
 function getCurrentWeekStart(date = new Date()) {
-  const result = new Date(date);
-  const day = result.getDay();
-
-  result.setDate(result.getDate() - day);
-  result.setHours(12, 0, 0, 0);
-
-  const year = result.getFullYear();
-  const month = String(result.getMonth() + 1).padStart(2, "0");
-  const dayOfMonth = String(result.getDate()).padStart(2, "0");
-  return `${year}-${month}-${dayOfMonth}`;
+  return getCurrentKstWeekStart(date);
 }
 
 function getWeekOfMonth(date: Date) {
@@ -75,22 +71,7 @@ function formatWeekHeading(weekStart: string) {
 }
 
 function getNextMeetingDate(group: HomeGroup) {
-  if (group.default_meeting_day === null || !group.default_meeting_time) {
-    return null;
-  }
-
-  const [hour, minute] = group.default_meeting_time.split(":").map(Number);
-  const now = new Date();
-  const meeting = new Date(now);
-  const diff = (group.default_meeting_day - now.getDay() + 7) % 7;
-  meeting.setDate(now.getDate() + diff);
-  meeting.setHours(hour || 0, minute || 0, 0, 0);
-
-  if (meeting <= now) {
-    meeting.setDate(meeting.getDate() + 7);
-  }
-
-  return meeting;
+  return getNextWeeklyMeetingDate(group.default_meeting_day, group.default_meeting_time);
 }
 
 function formatRemainingMeeting(group: HomeGroup) {
@@ -151,17 +132,11 @@ function getStudyStartWeek(group: HomeGroup) {
 }
 
 function getThisWeekMeetingDate(group: HomeGroup, currentWeek: string) {
-  if (group.default_meeting_day === null || !group.default_meeting_time) {
-    return null;
-  }
-
-  const [year, month, day] = currentWeek.split("-").map(Number);
-  const [hour, minute] = group.default_meeting_time.split(":").map(Number);
-  if (!year || !month || !day) return null;
-
-  const meeting = new Date(year, month - 1, day, hour || 0, minute || 0, 0, 0);
-  meeting.setDate(meeting.getDate() + group.default_meeting_day);
-  return meeting;
+  return getWeeklyMeetingDateForKstWeek(
+    currentWeek,
+    group.default_meeting_day,
+    group.default_meeting_time,
+  );
 }
 
 function clampWeek(weekStart: string, minWeek: string, maxWeek: string) {

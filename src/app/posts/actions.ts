@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
+import { getWeeklyMeetingDateForKstWeek } from "@/lib/dates/kst";
 import { getCurrentWeekStart } from "@/lib/dates/week";
 import { fetchLinkPreview } from "@/lib/link-preview/metadata";
 import { notifyGroupMembers, notifyUser } from "@/lib/notifications";
@@ -135,18 +136,12 @@ function getThisWeekMeetingDate(group: {
   default_meeting_day: number | null;
   default_meeting_time: string | null;
 }) {
-  if (group.default_meeting_day === null || !group.default_meeting_time) {
-    return null;
-  }
-
   const currentWeek = getCurrentWeekStart();
-  const [year, month, day] = currentWeek.split("-").map(Number);
-  const [hour, minute] = group.default_meeting_time.split(":").map(Number);
-  if (!year || !month || !day) return null;
-
-  const meeting = new Date(year, month - 1, day, hour || 0, minute || 0, 0, 0);
-  meeting.setDate(meeting.getDate() + group.default_meeting_day);
-  return meeting;
+  return getWeeklyMeetingDateForKstWeek(
+    currentWeek,
+    group.default_meeting_day,
+    group.default_meeting_time,
+  );
 }
 
 function isWeekStart(value: string) {

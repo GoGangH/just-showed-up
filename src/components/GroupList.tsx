@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Clock3, MapPin, UsersRound } from "lucide-react";
 import type { HomeGroup } from "@/app/home-data";
+import { getNextWeeklyMeetingDate } from "@/lib/dates/kst";
 import { buildLoginHref } from "@/lib/redirects";
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
@@ -10,22 +11,7 @@ function getInitial(name: string) {
 }
 
 function getNextMeeting(group: HomeGroup) {
-  if (group.default_meeting_day === null || !group.default_meeting_time) {
-    return null;
-  }
-
-  const [hour, minute] = group.default_meeting_time.split(":").map(Number);
-  const now = new Date();
-  const next = new Date(now);
-  const diff = (group.default_meeting_day - now.getDay() + 7) % 7;
-  next.setDate(now.getDate() + diff);
-  next.setHours(hour || 0, minute || 0, 0, 0);
-
-  if (next <= now) {
-    next.setDate(next.getDate() + 7);
-  }
-
-  return next;
+  return getNextWeeklyMeetingDate(group.default_meeting_day, group.default_meeting_time);
 }
 
 function formatRemaining(group: HomeGroup) {
