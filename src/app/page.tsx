@@ -267,8 +267,12 @@ export default async function Home({ searchParams }: HomeProps) {
           description="그룹의 고정 모임 요일, 시간, 장소를 수정합니다."
           title="그룹 설정"
         >
-          {activeGroup.currentUserRole === "owner" ? (
-            <GroupSettingsForm group={activeGroup} week={selectedWeek} />
+          {activeGroup.currentUserRole === "owner" && homeData.user ? (
+            <GroupSettingsForm
+              currentUserId={homeData.user.id}
+              group={activeGroup}
+              week={selectedWeek}
+            />
           ) : (
             <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               그룹장만 모임 정보를 수정할 수 있습니다.

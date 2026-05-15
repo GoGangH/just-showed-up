@@ -256,6 +256,10 @@ export type Database = {
         Args: { target_group_id: string };
         Returns: void;
       };
+      transfer_group_ownership: {
+        Args: { new_owner_user_id: string; target_group_id: string };
+        Returns: void;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

@@ -210,3 +210,60 @@ export async function leaveGroupAction(
 
   redirect("/");
 }
+
+export async function transferGroupOwnershipAction(
+  _: GroupFormState,
+  formData: FormData,
+): Promise<GroupFormState> {
+  if (!hasSupabaseConfig()) {
+    return { error: "Supabase 환경변수를 먼저 설정해주세요." };
+  }
+
+  const groupId = String(formData.get("group_id") ?? "").trim();
+  const week = String(formData.get("week") ?? "").trim();
+  const newOwnerUserId = String(formData.get("new_owner_user_id") ?? "").trim();
+  const confirmTransfer = String(formData.get("confirm_transfer") ?? "") === "yes";
+
+  if (!groupId) {
+    return { error: "그룹을 찾지 못했습니다." };
+  }
+
+  if (!newOwnerUserId) {
+    return { error: "새 그룹장을 선택해주세요." };
+  }
+
+  if (!confirmTransfer) {
+    return { error: "위임 확인에 체크해주세요." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  if (newOwnerUserId === user.id) {
+    return { error: "본인에게는 그룹장을 위임할 수 없습니다." };
+  }
+
+  const { error } = await supabase.rpc("transfer_group_ownership", {
+    new_owner_user_id: newOwnerUserId,
+    target_group_id: groupId,
+  } as never);
+
+  if (error) {
+    return {
+      error:
+        error.message === "new owner is not a group member"
+          ? "선택한 사용자가 이 그룹의 멤버가 아닙니다."
+          : "그룹장을 위임하지 못했습니다. 권한과 DB migration 적용 여부를 확인해주세요.",
+    };
+  }
+
+  redirect(
+    `/?group=${groupId}${week ? `&week=${encodeURIComponent(week)}` : ""}&modal=group-settings`,
+  );
+}
