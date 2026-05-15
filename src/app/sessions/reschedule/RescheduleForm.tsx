@@ -36,6 +36,11 @@ function toLocalInputValue(date: Date) {
   return `${year}-${month}-${day}T${hour}:${minute}`;
 }
 
+function localInputValueToIso(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toISOString();
+}
+
 function formatTime(hour: number, minute: number) {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
@@ -184,7 +189,7 @@ export function RescheduleForm({
     <form action={formAction} className="space-y-5">
       <input name="group_id" type="hidden" value={groupId} />
       {Array.from(selected).map((slot) => (
-        <input key={slot} name="slots" type="hidden" value={slot} />
+        <input key={slot} name="slots" type="hidden" value={localInputValueToIso(slot)} />
       ))}
 
       <label className="block">
@@ -208,7 +213,12 @@ export function RescheduleForm({
         </div>
 
         <div className="mt-3 max-h-[430px] overflow-auto rounded-md border border-neutral-200">
-          <div className="grid min-w-[420px] select-none grid-cols-[44px_repeat(5,minmax(58px,1fr))]">
+          <div
+            className="grid min-w-[420px] select-none"
+            style={{
+              gridTemplateColumns: `44px repeat(${days.length}, minmax(58px, 1fr))`,
+            }}
+          >
             <div className="border-b border-r border-neutral-200 bg-neutral-50 p-2 text-xs font-semibold text-neutral-500">
               시간
             </div>
