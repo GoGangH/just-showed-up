@@ -2,6 +2,11 @@ import { Bell } from "lucide-react";
 import Link from "next/link";
 import { markAllNotificationsReadAction } from "@/app/notifications/actions";
 import type { HeaderNotification } from "@/lib/notifications";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type NotificationBellProps = {
   notifications: HeaderNotification[];
@@ -19,10 +24,10 @@ function formatTime(value: string) {
 
 export function NotificationBell({ notifications, unreadCount }: NotificationBellProps) {
   return (
-    <details className="group relative">
-      <summary
+    <DropdownMenu>
+      <DropdownMenuTrigger
         aria-label={`알림 ${unreadCount}개`}
-        className="relative flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 [&::-webkit-details-marker]:hidden"
+        className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
       >
         <Bell size={18} />
         {unreadCount > 0 ? (
@@ -30,9 +35,9 @@ export function NotificationBell({ notifications, unreadCount }: NotificationBel
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         ) : null}
-      </summary>
+      </DropdownMenuTrigger>
 
-      <div className="absolute right-0 top-full z-20 mt-2 w-[min(calc(100vw-2rem),20rem)] overflow-hidden rounded-md border border-neutral-200 bg-white shadow-lg">
+      <DropdownMenuContent align="end" className="w-[min(calc(100vw-2rem),20rem)] p-0">
         <div className="flex items-start justify-between gap-3 border-b border-neutral-100 px-4 py-3">
           <div>
             <p className="text-sm font-semibold text-neutral-900">알림</p>
@@ -84,7 +89,7 @@ export function NotificationBell({ notifications, unreadCount }: NotificationBel
             ))}
           </div>
         )}
-      </div>
-    </details>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

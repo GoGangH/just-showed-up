@@ -1,5 +1,11 @@
 import { ChevronDown, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type ProfileMenuProps = {
   avatarUrl: string | null;
@@ -11,8 +17,8 @@ export function ProfileMenu({ avatarUrl, displayName, profileHref }: ProfileMenu
   const initial = displayName.trim().slice(0, 1).toUpperCase() || "?";
 
   return (
-    <details className="group relative">
-      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md border border-neutral-200 bg-white px-2 py-1.5 hover:border-neutral-300 [&::-webkit-details-marker]:hidden">
+    <DropdownMenu>
+      <DropdownMenuTrigger className="group flex cursor-pointer list-none items-center gap-2 rounded-md border border-neutral-200 bg-white px-2 py-1.5 hover:border-neutral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900">
         {avatarUrl ? (
           <img
             alt=""
@@ -28,25 +34,23 @@ export function ProfileMenu({ avatarUrl, displayName, profileHref }: ProfileMenu
         <span className="hidden max-w-28 truncate text-sm font-semibold text-neutral-800 sm:inline">
           {displayName}
         </span>
-        <ChevronDown className="text-neutral-500 transition group-open:rotate-180" size={16} />
-      </summary>
+        <ChevronDown className="text-neutral-500 transition group-data-[state=open]:rotate-180" size={16} />
+      </DropdownMenuTrigger>
 
-      <div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-md border border-neutral-200 bg-white p-1 shadow-lg">
-        <Link
-          className="flex items-center gap-2 rounded px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-          href={profileHref}
-        >
-          <UserRound size={16} />
-          내 정보
-        </Link>
-        <Link
-          className="flex items-center gap-2 rounded px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-          href="/logout"
-        >
-          <LogOut size={16} />
-          로그아웃
-        </Link>
-      </div>
-    </details>
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuItem asChild>
+          <Link href={profileHref}>
+            <UserRound size={16} />
+            내 정보
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/logout">
+            <LogOut size={16} />
+            로그아웃
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
