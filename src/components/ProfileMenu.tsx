@@ -1,5 +1,6 @@
 import { ChevronDown, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
+import { openAppModal } from "@/components/ModalTrigger";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,10 +11,9 @@ import {
 type ProfileMenuProps = {
   avatarUrl: string | null;
   displayName: string;
-  profileHref: "/" | "/?modal=profile" | `/?group=${string}&modal=profile`;
 };
 
-export function ProfileMenu({ avatarUrl, displayName, profileHref }: ProfileMenuProps) {
+export function ProfileMenu({ avatarUrl, displayName }: ProfileMenuProps) {
   const initial = displayName.trim().slice(0, 1).toUpperCase() || "?";
 
   return (
@@ -38,11 +38,9 @@ export function ProfileMenu({ avatarUrl, displayName, profileHref }: ProfileMenu
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuItem asChild>
-          <Link href={profileHref}>
-            <UserRound size={16} />
-            내 정보
-          </Link>
+        <DropdownMenuItem onSelect={() => openAppModal("profile")}>
+          <UserRound size={16} />
+          내 정보
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/logout">

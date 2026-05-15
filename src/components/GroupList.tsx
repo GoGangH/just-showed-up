@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Clock3, MapPin, UsersRound } from "lucide-react";
 import type { HomeGroup } from "@/app/home-data";
 import { getNextWeeklyMeetingDate } from "@/lib/dates/kst";
-import { buildLoginHref } from "@/lib/redirects";
+import { ModalTrigger } from "@/components/ModalTrigger";
 import { RemainingTime } from "./RemainingTime";
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
@@ -67,18 +67,18 @@ export function GroupList({
           로그인 후 새 그룹을 만들거나 초대 코드로 기존 그룹에 참여할 수 있습니다.
         </p>
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <Link
+          <ModalTrigger
             className="rounded-md bg-neutral-900 px-4 py-2 text-center text-sm font-semibold text-white"
-            href={buildLoginHref("/?modal=new-group") as never}
+            modal="new-group"
           >
             그룹 만들기
-          </Link>
-          <Link
+          </ModalTrigger>
+          <ModalTrigger
             className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-center text-sm font-semibold text-neutral-700"
-            href={buildLoginHref("/?modal=join-group") as never}
+            modal="join-group"
           >
             초대 코드 참여
-          </Link>
+          </ModalTrigger>
         </div>
       </section>
     );
@@ -95,9 +95,9 @@ export function GroupList({
           <p className="text-sm font-semibold text-neutral-500">내 그룹</p>
           <h2 className="mt-1 text-xl font-semibold">이번 주 스터디</h2>
         </div>
-        <Link className="text-sm font-semibold text-neutral-600 hover:text-neutral-900" href="/?modal=new-group">
+        <ModalTrigger className="text-sm font-semibold text-neutral-600 hover:text-neutral-900" modal="new-group">
           그룹 추가
-        </Link>
+        </ModalTrigger>
       </div>
 
       <div className="grid gap-3">

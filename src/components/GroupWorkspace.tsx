@@ -18,6 +18,7 @@ import {
   getWeeklyMeetingDateForKstWeek,
 } from "@/lib/dates/kst";
 import Link from "next/link";
+import { ModalTrigger } from "@/components/ModalTrigger";
 import { RemainingTime } from "./RemainingTime";
 
 const weekdays = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
@@ -288,28 +289,28 @@ export function GroupWorkspace({
 
           <div className="flex flex-wrap gap-2">
             {isOwner ? (
-              <Link
+              <ModalTrigger
                 className="inline-flex items-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
-                href={`/?group=${group.id}&week=${visibleWeek}&modal=group-settings`}
+                modal="group-settings"
               >
                 <Settings size={16} />
                 설정
-              </Link>
+              </ModalTrigger>
             ) : null}
-            <Link
+            <ModalTrigger
               className="inline-flex items-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
-              href={`/?group=${group.id}&week=${visibleWeek}&modal=invite`}
+              modal="invite"
             >
               <UserPlus size={16} />
               초대
-            </Link>
-            <Link
+            </ModalTrigger>
+            <ModalTrigger
               className="inline-flex items-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
-              href={`/?group=${group.id}&modal=reschedule`}
+              modal="reschedule"
             >
               <RotateCcw size={16} />
               일정 재조율
-            </Link>
+            </ModalTrigger>
           </div>
         </div>
 
@@ -342,12 +343,12 @@ export function GroupWorkspace({
                 {rescheduleOverview?.reason ? ` 사유: ${rescheduleOverview.reason}` : ""}
               </p>
             </div>
-            <Link
+            <ModalTrigger
               className="rounded-md bg-teal-700 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-teal-800"
-              href={`/?group=${group.id}&modal=reschedule`}
+              modal="reschedule"
             >
               {hasVoted ? "투표 수정" : "투표하기"}
-            </Link>
+            </ModalTrigger>
           </div>
           {isOwner && confirmCandidates.length > 0 ? (
             <div className="mt-4 border-t border-teal-200 pt-4">

@@ -13,11 +13,19 @@ type AppModalProps = {
   title: string;
   closeHref?: string;
   description?: string;
+  onClose?: () => void;
   size?: "sm" | "md" | "lg";
   children: ReactNode;
 };
 
-export function AppModal({ title, closeHref = "/", description, size = "md", children }: AppModalProps) {
+export function AppModal({
+  title,
+  closeHref = "/",
+  description,
+  onClose,
+  size = "md",
+  children,
+}: AppModalProps) {
   const widthClass = {
     sm: "max-w-[360px]",
     md: "max-w-xl",
@@ -25,13 +33,18 @@ export function AppModal({ title, closeHref = "/", description, size = "md", chi
   }[size];
 
   const close = useCallback(() => {
+    if (onClose) {
+      onClose();
+      return;
+    }
+
     if (closeHref.startsWith("/") && !closeHref.startsWith("//")) {
       window.history.pushState(null, "", closeHref);
       return;
     }
 
     window.location.assign(closeHref);
-  }, [closeHref]);
+  }, [closeHref, onClose]);
 
   return (
     <Dialog
