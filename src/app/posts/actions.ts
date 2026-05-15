@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
-import { revalidateGroup, revalidatePost } from "@/lib/cache/revalidation";
+import { revalidateGroup, revalidateMyPosts, revalidatePost } from "@/lib/cache/revalidation";
 import { getWeeklyMeetingDateForKstWeek } from "@/lib/dates/kst";
 import { getCurrentWeekStart } from "@/lib/dates/week";
 import { fetchLinkPreview } from "@/lib/link-preview/metadata";
@@ -435,6 +435,7 @@ export async function createWeeklyPostAction(
   });
 
   revalidateGroup(groupId);
+  revalidateMyPosts();
   redirect(`/posts/${post.id}`);
 }
 
@@ -644,6 +645,7 @@ export async function updateWeeklyPostAction(
 
   revalidatePost(postId);
   revalidateGroup(currentPost.group_id);
+  revalidateMyPosts();
   redirect(`/posts/${postId}`);
 }
 
@@ -749,6 +751,7 @@ export async function deleteWeeklyPostAction(formData: FormData) {
 
   revalidateGroup(post.group_id);
   revalidatePost(post.id);
+  revalidateMyPosts();
   redirect(`/groups/${post.group_id}?week=${post.week_start}`);
 }
 

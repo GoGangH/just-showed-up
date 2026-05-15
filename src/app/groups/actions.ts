@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
-import { revalidateGroup, revalidateHome } from "@/lib/cache/revalidation";
+import { revalidateGroup, revalidateHome, revalidateMyPosts } from "@/lib/cache/revalidation";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type GroupFormState = {
@@ -213,6 +213,7 @@ export async function leaveGroupAction(
   }
 
   revalidateGroup(groupId);
+  revalidateMyPosts();
   redirect("/");
 }
 
@@ -272,4 +273,62 @@ export async function transferGroupOwnershipAction(
   redirect(
     `/groups/${groupId}${week ? `?week=${encodeURIComponent(week)}&modal=group-settings` : "?modal=group-settings"}`,
   );
+}
+
+export async function deleteGroupAction(
+  _: GroupFormState,
+  formData: FormData,
+): Promise<GroupFormState> {
+  if (!hasSupabaseConfig()) {
+    return { error: "Supabase 환경변수를 먼저 설정해주세요." };
+  }
+
+  const groupId = String(formData.get("group_id") ?? "").trim();
+  const groupName = String(formData.get("group_name") ?? "").trim();
+  const confirmName = String(formData.get("confirm_name") ?? "").trim();
+  const confirmDelete = String(formData.get("confirm_delete") ?? "") === "yes";
+
+  if (!groupId) {
+    return { error: "삭제할 그룹을 찾지 못했습니다." };
+  }
+
+  if (!confirmDelete || confirmName !== groupName) {
+    return { error: "그룹 이름을 정확히 입력하고 삭제 확인에 체크해주세요." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const { data: attachmentData } = await supabase
+    .from("post_attachments")
+    .select("file_path,weekly_posts!inner(group_id)")
+    .eq("weekly_posts.group_id", groupId);
+  const filePaths = ((attachmentData ?? []) as { file_path: string }[]).map(
+    (attachment) => attachment.file_path,
+  );
+
+  if (filePaths.length > 0) {
+    await supabase.storage.from("post-attachments").remove(filePaths);
+  }
+
+  const { error } = await supabase.rpc("delete_group", { target_group_id: groupId } as never);
+
+  if (error) {
+    return {
+      error:
+        error.message === "only owner can delete group"
+          ? "그룹장만 그룹을 삭제할 수 있습니다."
+          : "그룹을 삭제하지 못했습니다. 권한과 DB migration 적용 여부를 확인해주세요.",
+    };
+  }
+
+  revalidateGroup(groupId);
+  revalidateMyPosts();
+  redirect("/");
 }

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import type { HomeGroup } from "@/app/home-data";
 import {
+  deleteGroupAction,
   transferGroupOwnershipAction,
   updateGroupSettingsAction,
   type GroupFormState,
@@ -40,6 +41,10 @@ export function GroupSettingsForm({
   const [state, formAction, pending] = useActionState(updateGroupSettingsAction, initialState);
   const [transferState, transferAction, transferPending] = useActionState(
     transferGroupOwnershipAction,
+    initialState,
+  );
+  const [deleteState, deleteAction, deletePending] = useActionState(
+    deleteGroupAction,
     initialState,
   );
   const transferCandidates = group.members.filter((member) => member.userId !== currentUserId);
@@ -187,6 +192,46 @@ export function GroupSettingsForm({
             위임할 다른 멤버가 아직 없습니다.
           </p>
         )}
+      </form>
+
+      <form action={deleteAction} className="rounded-md border border-red-200 bg-red-50 p-4">
+        <input name="group_id" type="hidden" value={group.id} />
+        <input name="group_name" type="hidden" value={group.name} />
+        <p className="text-sm font-semibold text-red-900">그룹 삭제</p>
+        <p className="mt-1 text-xs leading-5 text-red-800">
+          그룹, 멤버, 주차 글, 댓글, 반응, 일정 기록이 모두 삭제됩니다. 되돌릴 수 없습니다.
+        </p>
+        <label className="mt-3 block">
+          <span className="text-sm font-medium text-red-900">
+            삭제하려면 그룹 이름을 입력하세요
+          </span>
+          <input
+            className="mt-1 w-full rounded-md border border-red-200 bg-white px-4 py-3 outline-none focus:border-red-700"
+            name="confirm_name"
+            placeholder={group.name}
+          />
+        </label>
+        <label className="mt-3 flex items-center gap-2 text-sm font-medium text-red-900">
+          <input
+            className="size-4 rounded border-red-300"
+            name="confirm_delete"
+            type="checkbox"
+            value="yes"
+          />
+          이 그룹을 영구 삭제합니다
+        </label>
+        {deleteState.error ? (
+          <p className="mt-3 rounded-md border border-red-200 bg-white px-3 py-2 text-sm text-red-700">
+            {deleteState.error}
+          </p>
+        ) : null}
+        <button
+          className="mt-3 rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={deletePending}
+          type="submit"
+        >
+          {deletePending ? "삭제 중" : "그룹 삭제"}
+        </button>
       </form>
     </div>
   );

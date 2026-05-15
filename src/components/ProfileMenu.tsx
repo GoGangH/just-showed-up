@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, LogOut, UserRound } from "lucide-react";
+import { ChevronDown, FileText, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
 import { openAppModal } from "@/components/ModalTrigger";
 import {
@@ -43,6 +43,12 @@ export function ProfileMenu({ avatarUrl, displayName }: ProfileMenuProps) {
         <DropdownMenuItem onSelect={() => openAppModal("profile")}>
           <UserRound size={16} />
           내 정보
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/me/posts">
+            <FileText size={16} />
+            내가 올린 글
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/logout">

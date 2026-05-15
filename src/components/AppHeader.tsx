@@ -1,4 +1,5 @@
 import { ModalTrigger } from "@/components/ModalTrigger";
+import { NotificationCacheRefresh } from "@/components/NotificationCacheRefresh";
 import { NotificationBell } from "@/components/NotificationBell";
 import { PrefetchRouteLink } from "@/components/PrefetchRouteLink";
 import { ProfileMenu } from "@/components/ProfileMenu";
@@ -20,8 +21,14 @@ export function AppHeader({
   notifications,
   unreadCount,
 }: AppHeaderProps) {
+  const latestNotification = notifications[0];
+  const notificationSignature = latestNotification
+    ? `${latestNotification.id}:${latestNotification.created_at}:${latestNotification.read_at ?? "unread"}`
+    : "empty";
+
   return (
     <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur">
+      {isSignedIn ? <NotificationCacheRefresh initialSignature={notificationSignature} /> : null}
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
         <PrefetchRouteLink href="/" prefetchOnMount>
           <div>

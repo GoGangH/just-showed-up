@@ -16,3 +16,7 @@ export function revalidateGroup(groupId: string) {
 export function revalidatePost(postId: string) {
   revalidatePath(`/posts/${postId}`);
 }
+
+export function revalidateMyPosts() {
+  revalidatePath("/me/posts");
+}

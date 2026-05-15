@@ -277,6 +277,10 @@ export type Database = {
         Args: { new_owner_user_id: string; target_group_id: string };
         Returns: void;
       };
+      delete_group: {
+        Args: { target_group_id: string };
+        Returns: void;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
