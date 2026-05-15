@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { revalidateAppShell } from "@/lib/cache/revalidation";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 
 type NotificationRouteProps = {
@@ -50,6 +51,7 @@ export async function GET(_: Request, { params }: NotificationRouteProps) {
       .update({ read_at: new Date().toISOString() } as never)
       .eq("id", notificationId)
       .eq("user_id", user.id);
+    revalidateAppShell();
   }
 
   redirect(safeInternalHref(notification.href) as Parameters<typeof redirect>[0]);

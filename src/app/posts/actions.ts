@@ -1,9 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
+import { revalidateGroup, revalidatePost } from "@/lib/cache/revalidation";
 import { getWeeklyMeetingDateForKstWeek } from "@/lib/dates/kst";
 import { getCurrentWeekStart } from "@/lib/dates/week";
 import { fetchLinkPreview } from "@/lib/link-preview/metadata";
@@ -434,6 +434,7 @@ export async function createWeeklyPostAction(
     type: "weekly_post_created",
   });
 
+  revalidateGroup(groupId);
   redirect(`/posts/${post.id}`);
 }
 
@@ -492,7 +493,8 @@ export async function createAnonymousCommentAction(
     });
   }
 
-  revalidatePath(`/posts/${postId}`);
+  revalidatePost(postId);
+  revalidateGroup(post.group_id);
   return {};
 }
 
@@ -540,6 +542,18 @@ export async function updateWeeklyPostAction(
 
   if (!user) {
     return { error: "로그인이 필요합니다." };
+  }
+
+  const { data: currentPostData } = await supabase
+    .from("weekly_posts")
+    .select("group_id,week_start")
+    .eq("id", postId)
+    .eq("author_id", user.id)
+    .single();
+  const currentPost = currentPostData as { group_id: string; week_start: string } | null;
+
+  if (!currentPost) {
+    return { error: "공유글 정보를 확인하지 못했습니다." };
   }
 
   const { error } = await supabase
@@ -628,7 +642,8 @@ export async function updateWeeklyPostAction(
     }
   }
 
-  revalidatePath(`/posts/${postId}`);
+  revalidatePost(postId);
+  revalidateGroup(currentPost.group_id);
   redirect(`/posts/${postId}`);
 }
 
@@ -683,7 +698,7 @@ export async function deletePostAttachmentAction(formData: FormData) {
     .eq("post_id", postId);
   await supabase.storage.from(attachmentBucket).remove([attachment.file_path]);
 
-  revalidatePath(`/posts/${postId}`);
+  revalidatePost(postId);
   redirect(`/posts/${postId}/edit`);
 }
 
@@ -732,6 +747,8 @@ export async function deleteWeeklyPostAction(formData: FormData) {
 
   await supabase.from("weekly_posts").delete().eq("id", post.id).eq("author_id", user.id);
 
+  revalidateGroup(post.group_id);
+  revalidatePost(post.id);
   redirect(`/groups/${post.group_id}?week=${post.week_start}`);
 }
 
@@ -774,6 +791,7 @@ export async function createAnonymousReactionAction(formData: FormData) {
   };
 
   await supabase.from("anonymous_reactions").insert(payload as never);
-  revalidatePath(`/posts/${postId}`);
+  revalidatePost(postId);
+  revalidateGroup(post.group_id);
   redirect(`/posts/${postId}`);
 }

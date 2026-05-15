@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { getCurrentWeekStart } from "@/lib/dates/week";
+import { revalidateGroup } from "@/lib/cache/revalidation";
 import { notifyGroupMembers, notifyGroupOwners } from "@/lib/notifications";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -129,6 +130,7 @@ export async function startRescheduleAction(
       supabase,
       userId: user.id,
     });
+    revalidateGroup(groupId);
     redirect(`/groups/${groupId}`);
   }
 
@@ -207,6 +209,7 @@ export async function startRescheduleAction(
     type: "reschedule_vote_needed",
   });
 
+  revalidateGroup(groupId);
   redirect(`/groups/${groupId}`);
 }
 
@@ -322,5 +325,6 @@ export async function confirmRescheduleAction(formData: FormData) {
     type: "schedule_confirmed",
   });
 
+  revalidateGroup(groupId);
   redirect(`/groups/${groupId}`);
 }

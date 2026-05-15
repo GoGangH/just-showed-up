@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
+import { revalidateGroup, revalidateHome } from "@/lib/cache/revalidation";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type GroupFormState = {
@@ -69,6 +70,7 @@ export async function createGroupAction(
     return { error: "그룹을 만들지 못했습니다. 그룹 권한과 DB 설정을 확인해주세요." };
   }
 
+  revalidateHome();
   redirect(`/groups/${payload.id}`);
 }
 
@@ -101,6 +103,7 @@ export async function joinGroupAction(
     return { error: "초대 코드를 확인해주세요." };
   }
 
+  revalidateGroup(groupId);
   redirect(`/groups/${groupId}`);
 }
 
@@ -165,6 +168,7 @@ export async function updateGroupSettingsAction(
     return { error: "그룹 정보를 수정하지 못했습니다. 권한과 DB 설정을 확인해주세요." };
   }
 
+  revalidateGroup(groupId);
   const weekQuery = week ? `?week=${encodeURIComponent(week)}` : "";
   redirect(`/groups/${groupId}${weekQuery}`);
 }
@@ -208,6 +212,7 @@ export async function leaveGroupAction(
     };
   }
 
+  revalidateGroup(groupId);
   redirect("/");
 }
 
@@ -263,6 +268,7 @@ export async function transferGroupOwnershipAction(
     };
   }
 
+  revalidateGroup(groupId);
   redirect(
     `/groups/${groupId}${week ? `?week=${encodeURIComponent(week)}&modal=group-settings` : "?modal=group-settings"}`,
   );

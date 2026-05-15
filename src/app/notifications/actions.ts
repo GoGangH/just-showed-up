@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateAppShell } from "@/lib/cache/revalidation";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 
@@ -24,5 +24,5 @@ export async function markAllNotificationsReadAction() {
     .eq("user_id", user.id)
     .is("read_at", null);
 
-  revalidatePath("/");
+  revalidateAppShell();
 }
