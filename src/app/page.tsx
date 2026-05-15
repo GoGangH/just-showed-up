@@ -36,17 +36,21 @@ export default async function Home({ searchParams }: HomeProps) {
   const requestHeaders = await headers();
   const origin = getRequestOrigin(requestHeaders);
   const selectedWeek = week ?? getCurrentWeekStart();
-  const homeData = await getHomeData(group, selectedWeek);
+  const includeActivePosts = !modal || modal === "reschedule";
+  const homeData = await getHomeData(group, selectedWeek, { includeActivePosts });
   const activeGroup = group ? homeData.groups.find((item) => item.id === group) ?? null : null;
   const isSignedIn = Boolean(homeData.user);
   const displayName =
     homeData.user?.name ?? homeData.user?.email?.split("@")[0] ?? "사용자";
   const sharedSupabase = homeData.user ? await createClient() : null;
+  const shouldLoadRescheduleOverview = Boolean(
+    homeData.user && activeGroup && (!modal || modal === "reschedule"),
+  );
   const [notificationData, rescheduleOverview] = await Promise.all([
     homeData.user && sharedSupabase
       ? getHeaderNotifications(sharedSupabase, homeData.user.id)
       : Promise.resolve({ notifications: [], unreadCount: 0 }),
-    homeData.user && activeGroup && sharedSupabase
+    shouldLoadRescheduleOverview && homeData.user && activeGroup && sharedSupabase
       ? getRescheduleOverview(activeGroup.id, { supabase: sharedSupabase, userId: homeData.user.id })
       : Promise.resolve({
           availability: [],

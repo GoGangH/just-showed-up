@@ -86,7 +86,11 @@ function getSafeSelectedWeek(value: string | undefined) {
   return Number.isNaN(date.getTime()) ? getCurrentWeekStart() : value;
 }
 
-export async function getHomeData(activeGroupId?: string, selectedWeekInput?: string): Promise<HomeData> {
+export async function getHomeData(
+  activeGroupId?: string,
+  selectedWeekInput?: string,
+  options: { includeActivePosts?: boolean } = {},
+): Promise<HomeData> {
   if (!hasSupabaseConfig()) {
     return {
       configured: false,
@@ -114,6 +118,7 @@ export async function getHomeData(activeGroupId?: string, selectedWeekInput?: st
   }
 
   const profileName = getProfileDisplayName(user);
+  const includeActivePosts = options.includeActivePosts ?? true;
 
   const { data, error } = await supabase
     .from("groups")
@@ -145,7 +150,7 @@ export async function getHomeData(activeGroupId?: string, selectedWeekInput?: st
         .from("group_members")
         .select("group_id,user_id,role")
         .in("group_id", groupIds),
-      activeGroupBase
+      activeGroupBase && includeActivePosts
         ? supabase
             .from("weekly_posts")
             .select(
