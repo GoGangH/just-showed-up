@@ -7,6 +7,7 @@ type ExistingAttachment = {
   file_size: number;
   file_type: string;
   id: string;
+  signedUrl?: string | null;
 };
 
 type SelectedAttachment = {
@@ -154,24 +155,34 @@ export function PostAttachmentInput({
           <div className="mt-3 space-y-2">
             {existingImages.map((attachment) => (
               <div
-                className="flex flex-col gap-2 rounded-md bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+                className="rounded-md bg-white p-3"
                 key={attachment.id}
               >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-neutral-900">
-                    {attachment.file_name}
-                  </p>
-                  <p className="mt-1 text-xs text-neutral-500">
-                    이미지 · {formatFileSize(attachment.file_size)}
-                  </p>
+                {attachment.signedUrl ? (
+                  <img
+                    alt=""
+                    className="mb-3 max-h-40 w-full rounded-md object-cover"
+                    referrerPolicy="no-referrer"
+                    src={attachment.signedUrl}
+                  />
+                ) : null}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-neutral-900">
+                      {attachment.file_name}
+                    </p>
+                    <p className="mt-1 text-xs text-neutral-500">
+                      이미지 · {formatFileSize(attachment.file_size)}
+                    </p>
+                  </div>
+                  <button
+                    className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
+                    onClick={() => insertImage(attachment.file_name, attachment.id)}
+                    type="button"
+                  >
+                    본문에 삽입
+                  </button>
                 </div>
-                <button
-                  className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
-                  onClick={() => insertImage(attachment.file_name, attachment.id)}
-                  type="button"
-                >
-                  본문에 삽입
-                </button>
               </div>
             ))}
           </div>

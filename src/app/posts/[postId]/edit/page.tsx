@@ -28,7 +28,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
 
   const { data } = await supabase
     .from("weekly_posts")
-    .select("id,title,body_markdown,feedback_question,author_id,post_links(url),post_attachments(id,file_name,file_type,file_size)")
+    .select("id,title,body_markdown,feedback_question,author_id,post_links(url),post_attachments(id,file_name,file_type,file_size,file_path)")
     .eq("id", postId)
     .single();
 
@@ -39,6 +39,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
     id: string;
     post_attachments: {
       file_name: string;
+      file_path: string;
       file_size: number;
       file_type: string;
       id: string;
@@ -54,6 +55,23 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
   if (post.author_id !== user.id) {
     redirect(`/posts/${post.id}`);
   }
+
+  const attachments = await Promise.all(
+    post.post_attachments.map(async (attachment) => {
+      if (!attachment.file_type.startsWith("image/")) {
+        return { ...attachment, signedUrl: null };
+      }
+
+      const { data: signedData } = await supabase.storage
+        .from("post-attachments")
+        .createSignedUrl(attachment.file_path, 60 * 30);
+
+      return {
+        ...attachment,
+        signedUrl: signedData?.signedUrl ?? null,
+      };
+    }),
+  );
 
   return (
     <main className="min-h-screen px-4 py-8">
@@ -72,7 +90,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
               body_markdown: post.body_markdown,
               feedback_question: post.feedback_question,
               id: post.id,
-              attachments: post.post_attachments,
+              attachments,
               links: post.post_links.map((link) => link.url),
               title: post.title,
             }}

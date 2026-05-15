@@ -19,6 +19,7 @@ type PostEditFormProps = {
       file_size: number;
       file_type: string;
       id: string;
+      signedUrl: string | null;
     }[];
     body_markdown: string;
     feedback_question: string | null;
