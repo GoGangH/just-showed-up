@@ -19,6 +19,10 @@ type NotifyGroupMembersInput = {
   type: NotificationInsert["type"];
 };
 
+type NotifyGroupOwnersInput = Omit<NotifyGroupMembersInput, "excludeUserIds"> & {
+  excludeUserIds?: string[];
+};
+
 export async function getHeaderNotifications(supabase: AppSupabaseClient, userId?: string | null) {
   if (!userId) {
     return { notifications: [], unreadCount: 0 };
@@ -83,6 +87,42 @@ export async function notifyGroupMembers(
   const { error } = await supabase.from("notifications").insert(notifications as never);
   if (error) {
     console.error("Failed to create group notifications", error);
+  }
+}
+
+export async function notifyGroupOwners(
+  supabase: AppSupabaseClient,
+  input: NotifyGroupOwnersInput,
+) {
+  const { data: memberRows, error: memberError } = await supabase
+    .from("group_members")
+    .select("user_id")
+    .eq("group_id", input.groupId)
+    .eq("role", "owner");
+
+  if (memberError) {
+    console.error("Failed to load notification owner recipients", memberError);
+    return;
+  }
+
+  const excluded = new Set(input.excludeUserIds ?? []);
+  const notifications: NotificationInsert[] = ((memberRows ?? []) as { user_id: string }[])
+    .filter((member) => !excluded.has(member.user_id))
+    .map((member) => ({
+      actor_id: input.actorId,
+      body: input.body ?? null,
+      group_id: input.groupId,
+      href: input.href,
+      title: input.title,
+      type: input.type,
+      user_id: member.user_id,
+    }));
+
+  if (notifications.length === 0) return;
+
+  const { error } = await supabase.from("notifications").insert(notifications as never);
+  if (error) {
+    console.error("Failed to create owner notifications", error);
   }
 }
 

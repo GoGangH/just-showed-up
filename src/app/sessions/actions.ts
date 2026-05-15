@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { getCurrentWeekStart } from "@/lib/dates/week";
-import { notifyGroupMembers } from "@/lib/notifications";
+import { notifyGroupMembers, notifyGroupOwners } from "@/lib/notifications";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type SessionFormState = {
@@ -14,6 +14,7 @@ export type SessionFormState = {
 type StudySessionInsert = Database["public"]["Tables"]["study_sessions"]["Insert"];
 type TimeSlotInsert = Database["public"]["Tables"]["session_time_slots"]["Insert"];
 type AvailabilityInsert = Database["public"]["Tables"]["session_availabilities"]["Insert"];
+type SessionResponseInsert = Database["public"]["Tables"]["session_responses"]["Insert"];
 
 function parseLocalSlot(value: string) {
   const date = new Date(value);
@@ -99,7 +100,35 @@ export async function startRescheduleAction(
     return { error: "기존 가능 시간을 정리하지 못했습니다." };
   }
 
+  const { data: existingResponseData } = await supabase
+    .from("session_responses")
+    .select("session_id")
+    .eq("session_id", session.id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const hadResponded = Boolean(existingResponseData);
+
+  const responsePayload: SessionResponseInsert = {
+    session_id: session.id,
+    user_id: user.id,
+    updated_at: new Date().toISOString(),
+  };
+  const { error: responseError } = await supabase
+    .from("session_responses")
+    .upsert(responsePayload as never, { onConflict: "session_id,user_id" });
+
+  if (responseError) {
+    return { error: "응답 상태를 저장하지 못했습니다." };
+  }
+
   if (slots.length === 0) {
+    await notifyRescheduleCompletedIfNeeded({
+      groupId,
+      hadResponded,
+      sessionId: session.id,
+      supabase,
+      userId: user.id,
+    });
     redirect(`/?group=${groupId}`);
   }
 
@@ -160,6 +189,14 @@ export async function startRescheduleAction(
     return { error: "가능 시간을 저장하지 못했습니다." };
   }
 
+  await notifyRescheduleCompletedIfNeeded({
+    groupId,
+    hadResponded,
+    sessionId: session.id,
+    supabase,
+    userId: user.id,
+  });
+
   await notifyGroupMembers(supabase, {
     actorId: user.id,
     body: "이번 주 가능한 시간을 선택해주세요.",
@@ -171,6 +208,44 @@ export async function startRescheduleAction(
   });
 
   redirect(`/?group=${groupId}`);
+}
+
+async function notifyRescheduleCompletedIfNeeded({
+  groupId,
+  hadResponded,
+  sessionId,
+  supabase,
+  userId,
+}: {
+  groupId: string;
+  hadResponded: boolean;
+  sessionId: string;
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  userId: string;
+}) {
+  if (hadResponded) {
+    return;
+  }
+
+  const [memberResult, responseResult] = await Promise.all([
+    supabase.from("group_members").select("user_id", { count: "exact", head: true }).eq("group_id", groupId),
+    supabase.from("session_responses").select("user_id", { count: "exact", head: true }).eq("session_id", sessionId),
+  ]);
+
+  const memberCount = memberResult.count ?? 0;
+  const responseCount = responseResult.count ?? 0;
+  if (memberResult.error || responseResult.error || memberCount === 0 || responseCount < memberCount) {
+    return;
+  }
+
+  await notifyGroupOwners(supabase, {
+    actorId: userId,
+    body: "모든 멤버가 이번 주 가능한 시간을 제출했습니다.",
+    groupId,
+    href: `/?group=${groupId}&modal=reschedule`,
+    title: "일정 재조율 응답이 완료되었습니다",
+    type: "reschedule_vote_completed",
+  });
 }
 
 export async function confirmRescheduleAction(formData: FormData) {

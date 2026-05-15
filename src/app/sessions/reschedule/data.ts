@@ -73,17 +73,25 @@ export async function getRescheduleOverview(
   }
 
   const slotIds = slots.map((slot) => slot.id);
-  const { data: availabilityRows } = await supabase
-    .from("session_availabilities")
-    .select("slot_id,user_id")
-    .eq("session_id", session.id)
-    .in("slot_id", slotIds);
+  const [availabilityResult, responseResult] = await Promise.all([
+    supabase
+      .from("session_availabilities")
+      .select("slot_id,user_id")
+      .eq("session_id", session.id)
+      .in("slot_id", slotIds),
+    supabase
+      .from("session_responses")
+      .select("user_id")
+      .eq("session_id", session.id),
+  ]);
 
   const counts = new Map<string, number>();
   const mySlots = new Set<string>();
-  const responders = new Set<string>();
+  const responders = new Set(
+    ((responseResult.data ?? []) as { user_id: string }[]).map((response) => response.user_id),
+  );
 
-  ((availabilityRows ?? []) as { slot_id: string; user_id: string }[]).forEach((availability) => {
+  ((availabilityResult.data ?? []) as { slot_id: string; user_id: string }[]).forEach((availability) => {
     counts.set(availability.slot_id, (counts.get(availability.slot_id) ?? 0) + 1);
     responders.add(availability.user_id);
     if (availability.user_id === userId) {

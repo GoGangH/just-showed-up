@@ -23,10 +23,19 @@ export async function GET(_: Request, { params }: NotificationRouteProps) {
 
   const { notificationId } = await params;
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/");
+  }
+
   const { data } = await supabase
     .from("notifications")
     .select("href,read_at")
     .eq("id", notificationId)
+    .eq("user_id", user.id)
     .single();
 
   const notification = data as { href: string; read_at: string | null } | null;
@@ -39,7 +48,8 @@ export async function GET(_: Request, { params }: NotificationRouteProps) {
     await supabase
       .from("notifications")
       .update({ read_at: new Date().toISOString() } as never)
-      .eq("id", notificationId);
+      .eq("id", notificationId)
+      .eq("user_id", user.id);
   }
 
   redirect(safeInternalHref(notification.href) as Parameters<typeof redirect>[0]);

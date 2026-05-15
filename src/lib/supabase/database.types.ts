@@ -220,6 +220,7 @@ export type Database = {
             | "weekly_post_created"
             | "anonymous_comment_created"
             | "reschedule_vote_needed"
+            | "reschedule_vote_completed"
             | "schedule_confirmed";
           title: string;
           body: string | null;
@@ -236,6 +237,7 @@ export type Database = {
             | "weekly_post_created"
             | "anonymous_comment_created"
             | "reschedule_vote_needed"
+            | "reschedule_vote_completed"
             | "schedule_confirmed";
           title: string;
           body?: string | null;
@@ -244,6 +246,21 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["notifications"]["Row"]>;
+      };
+      session_responses: {
+        Row: {
+          session_id: string;
+          user_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          session_id: string;
+          user_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["session_responses"]["Row"]>;
       };
     };
     Views: Record<string, never>;
