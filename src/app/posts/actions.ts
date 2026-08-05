@@ -9,6 +9,13 @@ import { getCurrentWeekStart } from "@/lib/dates/week";
 import { fetchLinkPreview } from "@/lib/link-preview/metadata";
 import { notifyGroupMembers, notifyUser } from "@/lib/notifications";
 import { buildLoginHref } from "@/lib/redirects";
+import {
+  allowedAttachmentTypes,
+  attachmentBucket,
+  getMaxSizeForType,
+  isImageType,
+  maxAttachmentCount,
+} from "./attachment-limits";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type PostFormState = {
@@ -20,18 +27,13 @@ type PostLinkInsert = Database["public"]["Tables"]["post_links"]["Insert"];
 type PostAttachmentInsert = Database["public"]["Tables"]["post_attachments"]["Insert"];
 type AnonymousCommentInsert = Database["public"]["Tables"]["anonymous_comments"]["Insert"];
 type AnonymousReactionInsert = Database["public"]["Tables"]["anonymous_reactions"]["Insert"];
-type CollectedAttachment = {
-  file: File;
+type UploadedAttachment = {
+  file_name: string;
+  file_path: string;
+  file_size: number;
+  file_type: string;
   token: string;
 };
-
-const attachmentBucket = "post-attachments";
-const imageTypes = new Set(["image/gif", "image/jpeg", "image/png", "image/webp"]);
-const pdfTypes = new Set(["application/pdf"]);
-const allowedAttachmentTypes = new Set([...imageTypes, ...pdfTypes]);
-const maxAttachmentCount = 5;
-const maxImageSize = 5 * 1024 * 1024;
-const maxPdfSize = 20 * 1024 * 1024;
 
 function collectLinks(formData: FormData) {
   return formData
@@ -55,15 +57,25 @@ function validateLinks(links: string[]) {
   return null;
 }
 
-function collectAttachments(formData: FormData) {
-  const values = [...formData.getAll("attachments"), ...formData.getAll("images")];
-  const files = values.filter((value): value is File => value instanceof File && value.size > 0);
-  const tokens = formData.getAll("attachment_tokens").map((value) => String(value));
-
-  return files.map((file, index) => ({
-    file,
-    token: isUuid(tokens[index]) ? tokens[index] : crypto.randomUUID(),
-  }));
+function collectAttachmentUploads(formData: FormData): UploadedAttachment[] {
+  return formData
+    .getAll("attachment_uploads")
+    .map((value) => {
+      try {
+        return JSON.parse(String(value)) as Record<string, unknown>;
+      } catch {
+        return null;
+      }
+    })
+    .filter((value): value is Record<string, unknown> => Boolean(value))
+    .map((value) => ({
+      file_name: String(value.file_name ?? ""),
+      file_path: String(value.file_path ?? ""),
+      file_size: Number(value.file_size ?? 0),
+      file_type: String(value.file_type ?? ""),
+      token: isUuid(String(value.token ?? "")) ? String(value.token) : crypto.randomUUID(),
+    }))
+    .filter((attachment) => attachment.file_path.length > 0 && attachment.file_name.length > 0);
 }
 
 function getSafeFileName(name: string) {
@@ -77,43 +89,24 @@ function getSafeFileName(name: string) {
   return safe || fallback;
 }
 
-function getFileExtension(file: File) {
-  const fromName = file.name.split(".").pop()?.toLowerCase();
-  if (fromName && /^[a-z0-9]+$/.test(fromName)) {
-    return fromName;
-  }
-
-  return {
-    "image/gif": "gif",
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-    "application/pdf": "pdf",
-  }[file.type] ?? "file";
-}
-
-function validateAttachments(attachments: CollectedAttachment[]) {
+function validateAttachmentUploads(attachments: UploadedAttachment[]) {
   if (attachments.length > maxAttachmentCount) {
     return `첨부 파일은 최대 ${maxAttachmentCount}개까지 올릴 수 있습니다.`;
   }
 
-  const invalidType = attachments.find((attachment) => !allowedAttachmentTypes.has(attachment.file.type));
+  const invalidType = attachments.find((attachment) => !allowedAttachmentTypes.has(attachment.file_type));
   if (invalidType) {
     return "첨부 파일은 JPG, PNG, WebP, GIF, PDF 형식만 올릴 수 있습니다.";
   }
 
-  const oversizedImage = attachments.find(
-    (attachment) => imageTypes.has(attachment.file.type) && attachment.file.size > maxImageSize,
-  );
-  if (oversizedImage) {
-    return "이미지 한 장의 크기는 5MB 이하여야 합니다.";
-  }
-
-  const oversizedPdf = attachments.find(
-    (attachment) => pdfTypes.has(attachment.file.type) && attachment.file.size > maxPdfSize,
-  );
-  if (oversizedPdf) {
-    return "PDF 한 개의 크기는 20MB 이하여야 합니다.";
+  const oversized = attachments.find((attachment) => {
+    const maxSize = getMaxSizeForType(attachment.file_type);
+    return maxSize !== null && attachment.file_size > maxSize;
+  });
+  if (oversized) {
+    return isImageType(oversized.file_type)
+      ? "이미지 한 장의 크기는 5MB 이하여야 합니다."
+      : "PDF 한 개의 크기는 20MB 이하여야 합니다.";
   }
 
   return null;
@@ -231,58 +224,81 @@ async function getFeedbackPostForMember({
   } | null;
 }
 
-async function uploadPostAttachments({
-  attachments: files,
-  groupId,
+// Attachments are uploaded directly from the browser to Supabase Storage before the
+// form is ever submitted (see PostAttachmentInput), so this only has to verify that
+// each claimed object really exists, belongs to this user, and satisfies the size/type
+// policy — using the real stored metadata rather than trusting the client's claims.
+async function finalizeAttachments({
+  attachments,
   postId,
   supabase,
   userId,
 }: {
-  attachments: CollectedAttachment[];
-  groupId: string;
+  attachments: UploadedAttachment[];
   postId: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any;
   userId: string;
 }) {
-  const uploadedPaths: string[] = [];
-  const attachments: PostAttachmentInsert[] = [];
+  const inserts: PostAttachmentInsert[] = [];
+  const acceptedPaths: string[] = [];
 
-  for (const [index, attachment] of files.entries()) {
-    const file = attachment.file;
-    const extension = getFileExtension(file);
-    const fileName = getSafeFileName(file.name);
-    const filePath = `${userId}/${groupId}/${postId}/${crypto.randomUUID()}-${index}.${extension}`;
-    const { error } = await supabase.storage
-      .from(attachmentBucket)
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        contentType: file.type,
-        upsert: false,
-      });
+  const fail = async (error: string, extraPathToRemove?: string) => {
+    const paths = extraPathToRemove ? [...acceptedPaths, extraPathToRemove] : acceptedPaths;
+    if (paths.length > 0) {
+      await supabase.storage.from(attachmentBucket).remove(paths);
+    }
+    return { attachments: [], error };
+  };
 
-    if (error) {
-      if (uploadedPaths.length > 0) {
-        await supabase.storage.from(attachmentBucket).remove(uploadedPaths);
-      }
-      return {
-        attachments: [],
-        error: "첨부 파일을 업로드하지 못했습니다. Storage 버킷과 권한 설정을 확인해주세요.",
-      };
+  for (const attachment of attachments) {
+    const pathParts = attachment.file_path.split("/");
+    if (pathParts[0] !== userId) {
+      return fail("첨부 파일 소유자를 확인하지 못했습니다.");
     }
 
-    uploadedPaths.push(filePath);
-    attachments.push({
+    const folder = pathParts.slice(0, -1).join("/");
+    const objectName = pathParts[pathParts.length - 1];
+    const { data: listData } = await supabase.storage
+      .from(attachmentBucket)
+      .list(folder, { search: objectName });
+    const found = ((listData ?? []) as { name: string; metadata: { mimetype?: string; size?: number } | null }[]).find(
+      (item) => item.name === objectName,
+    );
+
+    if (!found) {
+      return fail("첨부 파일을 확인하지 못했습니다. 다시 업로드해주세요.");
+    }
+
+    const actualSize = Number(found.metadata?.size ?? attachment.file_size);
+    const actualType = String(found.metadata?.mimetype ?? attachment.file_type);
+
+    if (!allowedAttachmentTypes.has(actualType)) {
+      return fail("첨부 파일은 JPG, PNG, WebP, GIF, PDF 형식만 올릴 수 있습니다.", attachment.file_path);
+    }
+
+    const maxSize = getMaxSizeForType(actualType);
+    if (maxSize !== null && actualSize > maxSize) {
+      return fail(
+        isImageType(actualType)
+          ? "이미지 한 장의 크기는 5MB 이하여야 합니다."
+          : "PDF 한 개의 크기는 20MB 이하여야 합니다.",
+        attachment.file_path,
+      );
+    }
+
+    acceptedPaths.push(attachment.file_path);
+    inserts.push({
       id: attachment.token,
-      file_name: fileName,
-      file_path: filePath,
-      file_size: file.size,
-      file_type: file.type,
+      file_name: getSafeFileName(attachment.file_name),
+      file_path: attachment.file_path,
+      file_size: actualSize,
+      file_type: actualType,
       post_id: postId,
     });
   }
 
-  return { attachments, error: null };
+  return { attachments: inserts, error: null };
 }
 
 export async function createWeeklyPostAction(
@@ -300,8 +316,8 @@ export async function createWeeklyPostAction(
   const weekStart = String(formData.get("week_start") ?? getCurrentWeekStart()).trim();
   const links = collectLinks(formData);
   const linkError = validateLinks(links);
-  const attachments = collectAttachments(formData);
-  const attachmentError = validateAttachments(attachments);
+  const attachments = collectAttachmentUploads(formData);
+  const attachmentError = validateAttachmentUploads(attachments);
 
   if (!groupId) {
     return { error: "그룹 정보가 필요합니다." };
@@ -380,9 +396,8 @@ export async function createWeeklyPostAction(
   }
 
   if (attachments.length > 0) {
-    const uploadResult = await uploadPostAttachments({
+    const uploadResult = await finalizeAttachments({
       attachments,
-      groupId,
       postId: post.id,
       supabase,
       userId: user.id,
@@ -513,8 +528,8 @@ export async function updateWeeklyPostAction(
   const feedbackQuestion = String(formData.get("feedback_question") ?? "").trim();
   const links = collectLinks(formData);
   const linkError = validateLinks(links);
-  const attachments = collectAttachments(formData);
-  const attachmentError = validateAttachments(attachments);
+  const attachments = collectAttachmentUploads(formData);
+  const attachmentError = validateAttachmentUploads(attachments);
 
   if (!postId) {
     return { error: "공유글 정보가 필요합니다." };
@@ -595,9 +610,8 @@ export async function updateWeeklyPostAction(
       return { error: `첨부 파일은 총 ${maxAttachmentCount}개까지만 유지할 수 있습니다.` };
     }
 
-    const uploadResult = await uploadPostAttachments({
+    const uploadResult = await finalizeAttachments({
       attachments,
-      groupId: post.group_id,
       postId,
       supabase,
       userId: user.id,

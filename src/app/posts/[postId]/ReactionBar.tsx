@@ -67,12 +67,12 @@ export function ReactionBar({
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2 text-sm text-neutral-600">
+      <div className="flex flex-wrap gap-2 text-sm text-muted">
         {reactions.map((reaction) => {
           const count = optimisticCounts[reaction.type] ?? 0;
 
           return (
-            <span className="rounded-md bg-neutral-100 px-2 py-1" key={reaction.type}>
+            <span className="rounded-md bg-line px-2 py-1" key={reaction.type}>
               {reaction.label} {count}
             </span>
           );
@@ -81,7 +81,7 @@ export function ReactionBar({
       <div className="mt-4 flex flex-wrap gap-2">
         {reactions.map((reaction) => (
           <button
-            className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-md border border-line-strong bg-surface px-3 py-2 text-sm font-semibold text-ink hover:border-ink disabled:cursor-not-allowed disabled:opacity-60"
             disabled={pending}
             key={reaction.type}
             onClick={() => submitReaction(reaction.type)}
@@ -92,7 +92,7 @@ export function ReactionBar({
         ))}
       </div>
       {error ? (
-        <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mt-3 rounded-md border border-berry-border bg-berry-tint px-3 py-2 text-sm text-berry">
           {error}
         </p>
       ) : null}

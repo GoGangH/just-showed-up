@@ -33,15 +33,15 @@ export function FeedPreview({ posts }: { posts: HomePost[] }) {
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-neutral-500">그룹 기록</p>
+          <p className="text-sm font-semibold text-faint">그룹 기록</p>
           <h2 className="mt-1 text-xl font-semibold">주차별 공유글</h2>
         </div>
       </div>
 
       {posts.length === 0 ? (
-        <article className="rounded-lg border border-neutral-200 bg-white p-5">
+        <article className="rounded-lg border border-line bg-surface p-5">
           <h3 className="text-lg font-semibold">아직 공유글이 없습니다</h3>
-          <p className="mt-2 text-sm leading-6 text-neutral-600">
+          <p className="mt-2 text-sm leading-6 text-muted">
             이번 주 모임 전에 첫 공유글을 작성해보세요.
           </p>
         </article>
@@ -50,40 +50,40 @@ export function FeedPreview({ posts }: { posts: HomePost[] }) {
       {Array.from(postsByWeek.entries()).map(([weekStart, weekPosts]) => (
         <div className="space-y-3" key={weekStart}>
           <div className="flex items-center gap-3">
-            <h3 className="text-sm font-semibold text-neutral-700">
+            <h3 className="text-sm font-semibold text-ink">
               {formatWeekLabel(weekStart)}
             </h3>
-            <div className="h-px flex-1 bg-neutral-200" />
-            <span className="text-xs font-semibold text-neutral-500">
+            <div className="h-px flex-1 bg-line" />
+            <span className="text-xs font-semibold text-faint">
               {weekPosts.length}개
             </span>
           </div>
 
           {weekPosts.map((post) => (
-            <article className="rounded-lg border border-neutral-200 bg-white p-5" key={post.id}>
+            <article className="rounded-lg border border-line bg-surface p-5" key={post.id}>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-semibold text-neutral-500">
+                  <p className="text-sm font-semibold text-faint">
                     {post.author?.nickname ?? "작성자"}
                   </p>
                   <Link className="mt-1 block text-lg font-semibold hover:underline" href={`/posts/${post.id}`}>
                     {post.title}
                   </Link>
                 </div>
-                <span className="rounded-md bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-600">
+                <span className="rounded-md bg-line px-3 py-1 text-xs font-semibold text-muted">
                   {formatWeekLabel(post.week_start)}
                 </span>
               </div>
-              <p className="mt-3 text-sm leading-6 text-neutral-700">{getExcerpt(post.body_markdown)}</p>
+              <p className="mt-3 text-sm leading-6 text-ink">{getExcerpt(post.body_markdown)}</p>
               {post.post_links.length > 0 ? (
-                <div className="mt-4 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm">
+                <div className="mt-4 rounded-md border border-line bg-line-soft p-3 text-sm">
                   <p className="inline-flex items-center gap-2 font-semibold">
                     <Paperclip size={15} />
                     {post.post_links.length}개 링크
                   </p>
                 </div>
               ) : null}
-              <div className="mt-4 flex flex-wrap gap-2 text-sm text-neutral-600">
+              <div className="mt-4 flex flex-wrap gap-2 text-sm text-muted">
                 <span className="inline-flex items-center gap-1">
                   <Sparkles size={15} />
                   익명 반응 {post.anonymous_reactions.length}

@@ -32,7 +32,7 @@ const DialogContent = forwardRef<
     <DialogOverlay />
     <DialogPrimitive.Content
       className={cn(
-        "fixed left-1/2 top-6 z-50 max-h-[calc(100vh-48px)] w-[calc(100vw-2rem)] -translate-x-1/2 overflow-y-auto rounded-lg border border-neutral-200 bg-white p-5 shadow-xl sm:top-1/2 sm:-translate-y-1/2",
+        "fixed left-1/2 top-6 z-50 max-h-[calc(100vh-48px)] w-[calc(100vw-2rem)] -translate-x-1/2 overflow-y-auto rounded-lg border border-line bg-surface p-5 shadow-xl sm:top-1/2 sm:-translate-y-1/2",
         className,
       )}
       ref={ref}
@@ -40,7 +40,7 @@ const DialogContent = forwardRef<
     >
       {children}
       {showClose ? (
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-md border border-neutral-200 p-2 text-neutral-600 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900">
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-md border border-line p-2 text-muted hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
           <X size={18} />
           <span className="sr-only">닫기</span>
         </DialogPrimitive.Close>
@@ -67,7 +67,7 @@ const DialogDescription = forwardRef<
   ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
-    className={cn("text-sm leading-6 text-neutral-600", className)}
+    className={cn("text-sm leading-6 text-muted", className)}
     ref={ref}
     {...props}
   />

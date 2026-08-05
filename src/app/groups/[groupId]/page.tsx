@@ -70,7 +70,7 @@ export default async function GroupPage({ params, searchParams }: GroupPageProps
       <div className="mx-auto max-w-6xl px-4 py-6 lg:px-8">
         <div className="space-y-6">
           {!homeData.configured ? (
-            <section className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
+            <section className="rounded-lg border border-sun-border bg-sun-tint p-5 text-sm leading-6 text-sun">
               <p className="font-semibold">Supabase 연결 정보가 필요합니다.</p>
               <p className="mt-1">
                 `.env.local`에 Supabase URL과 publishable key를 설정하면 로그인과 그룹 기능을 사용할 수
@@ -80,7 +80,7 @@ export default async function GroupPage({ params, searchParams }: GroupPageProps
           ) : null}
 
           {homeData.error ? (
-            <section className="rounded-lg border border-red-200 bg-red-50 p-5 text-sm leading-6 text-red-700">
+            <section className="rounded-lg border border-berry-border bg-berry-tint p-5 text-sm leading-6 text-berry">
               {homeData.error}
             </section>
           ) : null}
@@ -94,9 +94,9 @@ export default async function GroupPage({ params, searchParams }: GroupPageProps
               selectedWeek={selectedWeek}
             />
           ) : (
-            <section className="rounded-lg border border-neutral-200 bg-white p-6">
+            <section className="rounded-lg border border-line bg-surface p-6">
               <h1 className="text-xl font-semibold">그룹을 찾지 못했습니다</h1>
-              <p className="mt-2 text-sm text-neutral-600">
+              <p className="mt-2 text-sm text-muted">
                 참여 중인 그룹이 아니거나 삭제된 그룹입니다.
               </p>
             </section>

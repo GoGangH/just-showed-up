@@ -57,9 +57,9 @@ export function GroupSettingsForm({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-medium text-neutral-700">고정 모임 요일</span>
+            <span className="text-sm font-medium text-ink">고정 모임 요일</span>
             <select
-              className="mt-1 w-full rounded-md border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-900"
+              className="mt-1 w-full rounded-md border border-line-strong bg-surface px-4 py-3 outline-none focus:border-ink"
               defaultValue={group.default_meeting_day === null ? "" : String(group.default_meeting_day)}
               name="default_meeting_day"
             >
@@ -72,9 +72,9 @@ export function GroupSettingsForm({
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-neutral-700">고정 모임 시간</span>
+            <span className="text-sm font-medium text-ink">고정 모임 시간</span>
             <input
-              className="mt-1 w-full rounded-md border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-900"
+              className="mt-1 w-full rounded-md border border-line-strong bg-surface px-4 py-3 outline-none focus:border-ink"
               defaultValue={group.default_meeting_time?.slice(0, 5) ?? ""}
               name="default_meeting_time"
               type="time"
@@ -83,9 +83,9 @@ export function GroupSettingsForm({
         </div>
 
         <label className="block">
-          <span className="text-sm font-medium text-neutral-700">장소 유형</span>
+          <span className="text-sm font-medium text-ink">장소 유형</span>
           <select
-            className="mt-1 w-full rounded-md border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-900"
+            className="mt-1 w-full rounded-md border border-line-strong bg-surface px-4 py-3 outline-none focus:border-ink"
             defaultValue={group.default_location_type}
             name="default_location_type"
           >
@@ -98,9 +98,9 @@ export function GroupSettingsForm({
         </label>
 
         <label className="block">
-          <span className="text-sm font-medium text-neutral-700">장소 이름</span>
+          <span className="text-sm font-medium text-ink">장소 이름</span>
           <input
-            className="mt-1 w-full rounded-md border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-900"
+            className="mt-1 w-full rounded-md border border-line-strong bg-surface px-4 py-3 outline-none focus:border-ink"
             defaultValue={group.default_location_name ?? ""}
             name="default_location_name"
             placeholder="예: Google Meet, 강남역 스터디룸"
@@ -108,9 +108,9 @@ export function GroupSettingsForm({
         </label>
 
         <label className="block">
-          <span className="text-sm font-medium text-neutral-700">링크 또는 주소</span>
+          <span className="text-sm font-medium text-ink">링크 또는 주소</span>
           <input
-            className="mt-1 w-full rounded-md border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-900"
+            className="mt-1 w-full rounded-md border border-line-strong bg-surface px-4 py-3 outline-none focus:border-ink"
             defaultValue={group.default_location_url ?? ""}
             name="default_location_url"
             placeholder="https:// 또는 주소"
@@ -118,9 +118,9 @@ export function GroupSettingsForm({
         </label>
 
         <label className="block">
-          <span className="text-sm font-medium text-neutral-700">장소 메모</span>
+          <span className="text-sm font-medium text-ink">장소 메모</span>
           <textarea
-            className="mt-1 min-h-24 w-full resize-y rounded-md border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-900"
+            className="mt-1 min-h-24 w-full resize-y rounded-md border border-line-strong bg-surface px-4 py-3 outline-none focus:border-ink"
             defaultValue={group.default_location_note ?? ""}
             name="default_location_note"
             placeholder="입장 방법, 예약 정보, 채널명 등을 적어주세요."
@@ -128,13 +128,13 @@ export function GroupSettingsForm({
         </label>
 
         {state.error ? (
-          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="rounded-md border border-berry-border bg-berry-tint px-3 py-2 text-sm text-berry">
             {state.error}
           </p>
         ) : null}
 
         <button
-          className="w-full rounded-md bg-neutral-900 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-neutral-400"
+          className="w-full rounded-md bg-accent px-4 py-3 text-sm font-semibold text-inverse disabled:cursor-not-allowed disabled:bg-disabled"
           disabled={pending}
           type="submit"
         >
@@ -142,19 +142,19 @@ export function GroupSettingsForm({
         </button>
       </form>
 
-      <form action={transferAction} className="rounded-md border border-neutral-200 bg-neutral-50 p-4">
+      <form action={transferAction} className="rounded-md border border-line bg-line-soft p-4">
         <input name="group_id" type="hidden" value={group.id} />
         <input name="week" type="hidden" value={week} />
-        <p className="text-sm font-semibold text-neutral-900">그룹장 위임</p>
-        <p className="mt-1 text-xs leading-5 text-neutral-600">
+        <p className="text-sm font-semibold text-ink">그룹장 위임</p>
+        <p className="mt-1 text-xs leading-5 text-muted">
           다른 멤버에게 그룹장을 넘기면 내 역할은 일반 멤버로 변경됩니다.
         </p>
         {transferCandidates.length > 0 ? (
           <>
             <label className="mt-3 block">
-              <span className="text-sm font-medium text-neutral-700">새 그룹장</span>
+              <span className="text-sm font-medium text-ink">새 그룹장</span>
               <select
-                className="mt-1 w-full rounded-md border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-900"
+                className="mt-1 w-full rounded-md border border-line-strong bg-surface px-4 py-3 outline-none focus:border-ink"
                 name="new_owner_user_id"
               >
                 <option value="">멤버 선택</option>
@@ -165,9 +165,9 @@ export function GroupSettingsForm({
                 ))}
               </select>
             </label>
-            <label className="mt-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
+            <label className="mt-3 flex items-center gap-2 text-sm font-medium text-ink">
               <input
-                className="size-4 rounded border-neutral-300"
+                className="size-4 rounded border-line-strong"
                 name="confirm_transfer"
                 type="checkbox"
                 value="yes"
@@ -175,12 +175,12 @@ export function GroupSettingsForm({
               그룹장을 위임합니다
             </label>
             {transferState.error ? (
-              <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="mt-3 rounded-md border border-berry-border bg-berry-tint px-3 py-2 text-sm text-berry">
                 {transferState.error}
               </p>
             ) : null}
             <button
-              className="mt-3 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-3 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm font-semibold text-ink hover:border-ink disabled:cursor-not-allowed disabled:opacity-60"
               disabled={transferPending}
               type="submit"
             >
@@ -188,32 +188,32 @@ export function GroupSettingsForm({
             </button>
           </>
         ) : (
-          <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <p className="mt-3 rounded-md border border-sun-border bg-sun-tint px-3 py-2 text-sm text-sun">
             위임할 다른 멤버가 아직 없습니다.
           </p>
         )}
       </form>
 
-      <form action={deleteAction} className="rounded-md border border-red-200 bg-red-50 p-4">
+      <form action={deleteAction} className="rounded-md border border-berry-border bg-berry-tint p-4">
         <input name="group_id" type="hidden" value={group.id} />
         <input name="group_name" type="hidden" value={group.name} />
-        <p className="text-sm font-semibold text-red-900">그룹 삭제</p>
-        <p className="mt-1 text-xs leading-5 text-red-800">
+        <p className="text-sm font-semibold text-berry">그룹 삭제</p>
+        <p className="mt-1 text-xs leading-5 text-berry">
           그룹, 멤버, 주차 글, 댓글, 반응, 일정 기록이 모두 삭제됩니다. 되돌릴 수 없습니다.
         </p>
         <label className="mt-3 block">
-          <span className="text-sm font-medium text-red-900">
+          <span className="text-sm font-medium text-berry">
             삭제하려면 그룹 이름을 입력하세요
           </span>
           <input
-            className="mt-1 w-full rounded-md border border-red-200 bg-white px-4 py-3 outline-none focus:border-red-700"
+            className="mt-1 w-full rounded-md border border-berry-border bg-surface px-4 py-3 outline-none focus:border-berry"
             name="confirm_name"
             placeholder={group.name}
           />
         </label>
-        <label className="mt-3 flex items-center gap-2 text-sm font-medium text-red-900">
+        <label className="mt-3 flex items-center gap-2 text-sm font-medium text-berry">
           <input
-            className="size-4 rounded border-red-300"
+            className="size-4 rounded border-berry-border"
             name="confirm_delete"
             type="checkbox"
             value="yes"
@@ -221,12 +221,12 @@ export function GroupSettingsForm({
           이 그룹을 영구 삭제합니다
         </label>
         {deleteState.error ? (
-          <p className="mt-3 rounded-md border border-red-200 bg-white px-3 py-2 text-sm text-red-700">
+          <p className="mt-3 rounded-md border border-berry-border bg-surface px-3 py-2 text-sm text-berry">
             {deleteState.error}
           </p>
         ) : null}
         <button
-          className="mt-3 rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-3 rounded-md bg-berry px-3 py-2 text-sm font-semibold text-inverse hover:bg-berry-strong disabled:cursor-not-allowed disabled:opacity-60"
           disabled={deletePending}
           type="submit"
         >

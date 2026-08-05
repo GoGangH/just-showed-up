@@ -17,7 +17,7 @@ const DropdownMenuContent = forwardRef<
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       className={cn(
-        "z-50 min-w-44 overflow-hidden rounded-md border border-neutral-200 bg-white p-1 shadow-lg",
+        "z-50 min-w-44 overflow-hidden rounded-md border border-line bg-surface p-1 shadow-lg",
         className,
       )}
       ref={ref}
@@ -34,7 +34,7 @@ const DropdownMenuItem = forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Item
     className={cn(
-      "relative flex cursor-pointer select-none items-center gap-2 rounded px-3 py-2 text-sm font-medium text-neutral-700 outline-none transition-colors hover:bg-neutral-50 focus:bg-neutral-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-pointer select-none items-center gap-2 rounded px-3 py-2 text-sm font-medium text-ink outline-none transition-colors hover:bg-line-soft focus:bg-line-soft data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className,
     )}
     ref={ref}
@@ -48,7 +48,7 @@ const DropdownMenuLabel = forwardRef<
   ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label>
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Label
-    className={cn("px-3 py-2 text-sm font-semibold text-neutral-900", className)}
+    className={cn("px-3 py-2 text-sm font-semibold text-ink", className)}
     ref={ref}
     {...props}
   />
@@ -60,7 +60,7 @@ const DropdownMenuSeparator = forwardRef<
   ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Separator
-    className={cn("-mx-1 my-1 h-px bg-neutral-100", className)}
+    className={cn("-mx-1 my-1 h-px bg-line", className)}
     ref={ref}
     {...props}
   />

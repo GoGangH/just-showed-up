@@ -201,10 +201,10 @@ export function GroupWorkspace({
   const nextMeeting = getNextMeetingDate(group);
   const detailsGrid = (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <div className="rounded-md bg-neutral-50 p-3">
-        <p className="text-xs font-semibold text-neutral-500">모임</p>
-        <p className="mt-1 text-sm font-semibold text-neutral-900">{formatMeeting(group)}</p>
-        <p className="mt-1 text-xs text-neutral-500">
+      <div className="rounded-md bg-line-soft p-3">
+        <p className="text-xs font-semibold text-faint">모임</p>
+        <p className="mt-1 text-sm font-semibold text-ink">{formatMeeting(group)}</p>
+        <p className="mt-1 text-xs text-faint">
           <RemainingTime
             fallback="모임까지 남은 시간 미정"
             initialLabel={formatRemainingMeeting(group)}
@@ -214,12 +214,12 @@ export function GroupWorkspace({
           · {formatLocation(group)}
         </p>
       </div>
-      <div className="rounded-md bg-neutral-50 p-3">
-        <p className="text-xs font-semibold text-neutral-500">일정 응답</p>
-        <p className="mt-1 text-sm font-semibold text-neutral-900">
+      <div className="rounded-md bg-line-soft p-3">
+        <p className="text-xs font-semibold text-faint">일정 응답</p>
+        <p className="mt-1 text-sm font-semibold text-ink">
           {rescheduleOverview?.responderCount ?? 0}명 응답
         </p>
-        <p className="mt-1 text-xs text-neutral-500">
+        <p className="mt-1 text-xs text-faint">
           {topAvailability
             ? `최다 ${new Date(topAvailability.startsAt).toLocaleString("ko-KR", {
                 day: "numeric",
@@ -231,28 +231,28 @@ export function GroupWorkspace({
             : "후보 시간 없음"}
         </p>
       </div>
-      <div className="rounded-md bg-neutral-50 p-3">
-        <p className="text-xs font-semibold text-neutral-500">주차 등록</p>
-        <p className="mt-1 text-sm font-semibold text-neutral-900">
+      <div className="rounded-md bg-line-soft p-3">
+        <p className="text-xs font-semibold text-faint">주차 등록</p>
+        <p className="mt-1 text-sm font-semibold text-ink">
           {postsForWeek.length}/{group.members.length}명
         </p>
-        <p className="mt-1 text-xs text-neutral-500">{formatWeekLabel(visibleWeek)} 기준</p>
+        <p className="mt-1 text-xs text-faint">{formatWeekLabel(visibleWeek)} 기준</p>
       </div>
-      <div className="rounded-md bg-neutral-50 p-3">
-        <p className="text-xs font-semibold text-neutral-500">피드백</p>
-        <p className="mt-1 text-sm font-semibold text-neutral-900">
+      <div className="rounded-md bg-line-soft p-3">
+        <p className="text-xs font-semibold text-faint">피드백</p>
+        <p className="mt-1 text-sm font-semibold text-ink">
           댓글 {totalCommentCount} · 반응 {totalReactionCount}
         </p>
-        <p className="mt-1 text-xs text-neutral-500">익명으로 저장</p>
+        <p className="mt-1 text-xs text-faint">익명으로 저장</p>
       </div>
     </div>
   );
 
   return (
     <div className="space-y-6">
-      <section className="border-b border-neutral-200 pb-6">
+      <section className="border-b border-line pb-6">
         <PrefetchRouteLink
-          className="inline-flex items-center gap-1 text-sm font-semibold text-neutral-500 hover:text-neutral-900"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-faint hover:text-ink"
           href="/"
           prefetchOnMount
         >
@@ -262,26 +262,26 @@ export function GroupWorkspace({
 
         <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-semibold text-neutral-500">그룹</p>
+            <p className="text-sm font-semibold text-faint">그룹</p>
             <h1 className="mt-2 text-3xl font-semibold tracking-normal">{group.name}</h1>
             {group.default_location_note ? (
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-600">
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
                 {group.default_location_note}
               </p>
             ) : null}
-            <div className="mt-4 flex flex-wrap gap-2 text-sm text-neutral-600">
-              <span className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-3 py-1.5">
+            <div className="mt-4 flex flex-wrap gap-2 text-sm text-muted">
+              <span className="inline-flex items-center gap-1 rounded-md border border-line bg-surface px-3 py-1.5">
                 <CalendarClock size={15} />
                 {formatMeeting(group)}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-3 py-1.5">
+              <span className="inline-flex items-center gap-1 rounded-md border border-line bg-surface px-3 py-1.5">
                 {formatRemainingMeeting(group)}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-3 py-1.5">
+              <span className="inline-flex items-center gap-1 rounded-md border border-line bg-surface px-3 py-1.5">
                 <MapPin size={15} />
                 {formatLocation(group)}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-3 py-1.5">
+              <span className="inline-flex items-center gap-1 rounded-md border border-line bg-surface px-3 py-1.5">
                 <UsersRound size={15} />
                 {group.members.length}명
               </span>
@@ -291,7 +291,7 @@ export function GroupWorkspace({
           <div className="flex flex-wrap gap-2">
             {isOwner ? (
               <ModalTrigger
-                className="inline-flex items-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
+                className="inline-flex items-center gap-2 rounded-md border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-ink"
                 modal="group-settings"
               >
                 <Settings size={16} />
@@ -299,14 +299,14 @@ export function GroupWorkspace({
               </ModalTrigger>
             ) : null}
             <ModalTrigger
-              className="inline-flex items-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
+              className="inline-flex items-center gap-2 rounded-md border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-ink"
               modal="invite"
             >
               <UserPlus size={16} />
               초대
             </ModalTrigger>
             <ModalTrigger
-              className="inline-flex items-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
+              className="inline-flex items-center gap-2 rounded-md border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-ink"
               modal="reschedule"
             >
               <RotateCcw size={16} />
@@ -315,15 +315,15 @@ export function GroupWorkspace({
           </div>
         </div>
 
-        <details className="group mt-5 rounded-lg border border-neutral-200 bg-white p-4 lg:hidden">
+        <details className="group mt-5 rounded-lg border border-line bg-surface p-4 lg:hidden">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
             <div>
-              <p className="text-sm font-semibold text-neutral-500">자세히 보기</p>
-              <p className="mt-1 text-sm text-neutral-700">모임, 응답, 주차 현황</p>
+              <p className="text-sm font-semibold text-faint">자세히 보기</p>
+              <p className="mt-1 text-sm text-ink">모임, 응답, 주차 현황</p>
             </div>
-            <ChevronDown className="text-neutral-500 transition group-open:rotate-180" size={18} />
+            <ChevronDown className="text-faint transition group-open:rotate-180" size={18} />
           </summary>
-          <div className="mt-4 border-t border-neutral-100 pt-4">{detailsGrid}</div>
+          <div className="mt-4 border-t border-line-soft pt-4">{detailsGrid}</div>
         </details>
 
         <div className="mt-5 hidden lg:block">{detailsGrid}</div>
@@ -345,7 +345,7 @@ export function GroupWorkspace({
               </p>
             </div>
             <ModalTrigger
-              className="rounded-md bg-teal-700 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-teal-800"
+              className="rounded-md bg-teal-700 px-4 py-2 text-center text-sm font-semibold text-inverse hover:bg-teal-800"
               modal="reschedule"
             >
               {hasVoted ? "투표 수정" : "투표하기"}
@@ -360,13 +360,13 @@ export function GroupWorkspace({
                     <input name="group_id" type="hidden" value={group.id} />
                     <input name="starts_at" type="hidden" value={slot.startsAt} />
                     <button
-                      className="w-full rounded-md border border-teal-200 bg-white p-3 text-left hover:border-teal-700"
+                      className="w-full rounded-md border border-teal-200 bg-surface p-3 text-left hover:border-teal-700"
                       type="submit"
                     >
-                      <span className="block text-sm font-semibold text-neutral-900">
+                      <span className="block text-sm font-semibold text-ink">
                         {formatSlotLabel(slot.startsAt)}
                       </span>
-                      <span className="mt-1 block text-xs text-neutral-600">
+                      <span className="mt-1 block text-xs text-muted">
                         {slot.count}명 가능
                       </span>
                       <span className="mt-2 inline-flex text-xs font-semibold text-teal-700">
@@ -378,7 +378,7 @@ export function GroupWorkspace({
               </div>
             </div>
           ) : isOwner ? (
-            <div className="mt-4 rounded-md border border-teal-200 bg-white/70 p-3 text-sm text-teal-900">
+            <div className="mt-4 rounded-md border border-teal-200 bg-surface/70 p-3 text-sm text-teal-900">
               아직 확정할 수 있는 후보 시간이 없습니다.
             </div>
           ) : null}
@@ -386,12 +386,12 @@ export function GroupWorkspace({
       ) : null}
 
       {isScheduleConfirmed ? (
-        <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-          <p className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-800">
+        <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800/50 dark:bg-emerald-950/40">
+          <p className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
             <CalendarClock size={16} />
             이번 주 모임 시간이 확정되었습니다
           </p>
-          <p className="mt-1 text-sm leading-6 text-emerald-800">
+          <p className="mt-1 text-sm leading-6 text-emerald-800 dark:text-emerald-300">
             {formatSlotLabel(rescheduleOverview.scheduledAt ?? "")}
             {group.default_location_name ? ` · ${formatLocation(group)}` : ""}
           </p>
@@ -401,14 +401,14 @@ export function GroupWorkspace({
       <section className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-neutral-500">주차</p>
+            <p className="text-sm font-semibold text-faint">주차</p>
             <h2 className="mt-1 text-xl font-semibold">{formatWeekHeading(visibleWeek)}</h2>
           </div>
           <div className="flex items-center gap-2 pb-1">
             {canGoPrevious ? (
               <PrefetchRouteLink
                 aria-label="이전 주"
-                className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
+                className="inline-flex size-10 items-center justify-center rounded-md border border-line bg-surface text-ink hover:border-line-strong"
                 href={`/groups/${group.id}?week=${previousWeek}`}
                 prefetchOnMount
               >
@@ -417,18 +417,18 @@ export function GroupWorkspace({
             ) : (
               <span
                 aria-label="이전 주 없음"
-                className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-neutral-50 text-neutral-300"
+                className="inline-flex size-10 items-center justify-center rounded-md border border-line bg-line-soft text-faint"
               >
                 <ChevronLeft size={15} />
               </span>
             )}
-            <div className="min-w-44 rounded-md border border-neutral-200 bg-white px-4 py-2 text-center text-sm font-semibold text-neutral-900">
+            <div className="min-w-44 rounded-md border border-line bg-surface px-4 py-2 text-center text-sm font-semibold text-ink">
               {formatWeekHeading(visibleWeek)}
             </div>
             {canGoNext ? (
               <PrefetchRouteLink
                 aria-label="다음 주"
-                className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
+                className="inline-flex size-10 items-center justify-center rounded-md border border-line bg-surface text-ink hover:border-line-strong"
                 href={`/groups/${group.id}?week=${nextWeek}`}
                 prefetchOnMount
               >
@@ -437,7 +437,7 @@ export function GroupWorkspace({
             ) : (
               <span
                 aria-label="다음 주 없음"
-                className="inline-flex size-10 items-center justify-center rounded-md border border-neutral-200 bg-neutral-50 text-neutral-300"
+                className="inline-flex size-10 items-center justify-center rounded-md border border-line bg-line-soft text-faint"
               >
                 <ChevronRight size={15} />
               </span>
@@ -455,8 +455,8 @@ export function GroupWorkspace({
 
             return (
               <article
-                className={`relative rounded-lg border border-neutral-200 bg-white p-5 ${
-                  post ? "transition hover:border-neutral-400" : ""
+                className={`relative rounded-lg border border-line bg-surface p-5 ${
+                  post ? "transition hover:border-line-strong" : ""
                 }`}
                 key={member.userId}
               >
@@ -471,17 +471,17 @@ export function GroupWorkspace({
                   <div className="pointer-events-none relative z-20 flex min-w-0 items-start gap-3">
                     <div
                       className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
-                        post ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-500"
+                        post ? "bg-accent text-inverse" : "bg-line text-faint"
                       }`}
                     >
                       {getInitial(member.nickname)}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-neutral-900">{member.nickname}</p>
-                      <p className="mt-1 text-sm text-neutral-500">
+                      <p className="font-semibold text-ink">{member.nickname}</p>
+                      <p className="mt-1 text-sm text-faint">
                         {post ? `${weekStatusLabel} 등록 완료` : `${weekStatusLabel} 등록글 없음`}
                       </p>
-                      <p className="mt-1 text-xs font-semibold text-neutral-500">
+                      <p className="mt-1 text-xs font-semibold text-faint">
                         누적 미참여 {member.missedCount}회
                       </p>
                     </div>
@@ -491,8 +491,8 @@ export function GroupWorkspace({
                     <PrefetchRouteLink
                       className={`pointer-events-auto relative z-30 rounded-md px-3 py-2 text-center text-sm font-semibold ${
                         post
-                          ? "border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-900"
-                          : "bg-neutral-900 text-white"
+                          ? "border border-line bg-surface text-ink hover:border-ink"
+                          : "bg-accent text-inverse"
                       }`}
                       href={post ? `/posts/${post.id}/edit` : `/posts/new?group=${group.id}&week=${visibleWeek}`}
                     >
@@ -502,12 +502,12 @@ export function GroupWorkspace({
                 </div>
 
                 {post ? (
-                  <div className="pointer-events-none relative z-20 mt-4 border-t border-neutral-100 pt-4">
+                  <div className="pointer-events-none relative z-20 mt-4 border-t border-line-soft pt-4">
                     <p className="text-lg font-semibold">{post.title}</p>
-                    <p className="mt-2 text-sm leading-6 text-neutral-600">
+                    <p className="mt-2 text-sm leading-6 text-muted">
                       {getExcerpt(post.body_markdown)}
                     </p>
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-neutral-500">
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-faint">
                       <span>익명 댓글 {post.anonymous_comments.length}</span>
                       <span>익명 반응 {post.anonymous_reactions.length}</span>
                       {post.post_links.length > 0 ? <span>링크 {post.post_links.length}</span> : null}

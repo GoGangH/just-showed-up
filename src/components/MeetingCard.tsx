@@ -63,28 +63,28 @@ export function MeetingCard({
   const bestCount = topSlots[0]?.count ?? 0;
 
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white p-5">
+    <section className="rounded-lg border border-line bg-surface p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-semibold text-neutral-500">이번 주 모임</p>
+          <p className="text-sm font-semibold text-faint">이번 주 모임</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-normal">{formatMeetingTime(group)}</h2>
-          <div className="mt-3 flex flex-wrap gap-2 text-sm text-neutral-600">
-            <span className="inline-flex items-center gap-1 rounded-md border border-neutral-200 px-3 py-1.5">
+          <div className="mt-3 flex flex-wrap gap-2 text-sm text-muted">
+            <span className="inline-flex items-center gap-1 rounded-md border border-line px-3 py-1.5">
               <CalendarClock size={15} />
               5월 둘째 주
             </span>
-            <span className="inline-flex items-center gap-1 rounded-md border border-neutral-200 px-3 py-1.5">
+            <span className="inline-flex items-center gap-1 rounded-md border border-line px-3 py-1.5">
               <MapPin size={15} />
               {formatLocation(group)}
             </span>
           </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <button className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white">
+          <button className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-inverse">
             참석 가능
           </button>
           <Link
-            className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-center text-sm font-semibold text-neutral-700"
+            className="rounded-md border border-line-strong bg-surface px-4 py-2 text-center text-sm font-semibold text-ink"
             href={`/groups/${group.id}?modal=reschedule`}
           >
             이번 주 어려워요
@@ -92,14 +92,14 @@ export function MeetingCard({
         </div>
       </div>
 
-      <div className="mt-5 rounded-md border border-neutral-200 bg-neutral-50 p-4">
+      <div className="mt-5 rounded-md border border-line bg-line-soft p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="inline-flex items-center gap-2 text-sm font-semibold">
               <RotateCcw size={16} />
               일정 재조율
             </p>
-            <p className="mt-1 text-sm text-neutral-600">
+            <p className="mt-1 text-sm text-muted">
               이번 주 참석이 어려운 멤버가 있으면 가능한 시간을 모아 일정을 확정합니다.
             </p>
           </div>
@@ -113,8 +113,8 @@ export function MeetingCard({
               <div
                 className={`rounded-md border px-3 py-2 text-left text-sm ${
                   slot.count === bestCount
-                    ? "border-teal-500 bg-white text-teal-700"
-                    : "border-neutral-200 bg-white text-neutral-700"
+                    ? "border-teal-500 bg-surface text-teal-700"
+                    : "border-line bg-surface text-ink"
                 }`}
                 key={slot.startsAt}
               >
@@ -124,7 +124,7 @@ export function MeetingCard({
             ))}
           </div>
         ) : (
-          <p className="mt-4 rounded-md border border-dashed border-neutral-300 bg-white px-3 py-3 text-sm text-neutral-600">
+          <p className="mt-4 rounded-md border border-dashed border-line-strong bg-surface px-3 py-3 text-sm text-muted">
             아직 등록된 후보 시간이 없습니다.
           </p>
         )}
@@ -132,7 +132,7 @@ export function MeetingCard({
           <form action={confirmRescheduleAction} className="mt-4">
             <input name="group_id" type="hidden" value={group.id} />
             <input name="starts_at" type="hidden" value={topSlots[0].startsAt} />
-            <button className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800">
+            <button className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-inverse hover:bg-teal-800">
               최다 응답 시간으로 확정
             </button>
           </form>

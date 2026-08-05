@@ -28,7 +28,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
 
   const { data } = await supabase
     .from("weekly_posts")
-    .select("id,title,body_markdown,feedback_question,author_id,post_links(url),post_attachments(id,file_name,file_type,file_size,file_path)")
+    .select("id,title,body_markdown,feedback_question,author_id,group_id,post_links(url),post_attachments(id,file_name,file_type,file_size,file_path)")
     .eq("id", postId)
     .single();
 
@@ -36,6 +36,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
     author_id: string;
     body_markdown: string;
     feedback_question: string | null;
+    group_id: string;
     id: string;
     post_attachments: {
       file_name: string;
@@ -75,12 +76,12 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
 
   return (
     <main className="min-h-screen px-4 py-8">
-      <section className="mx-auto max-w-3xl rounded-lg border border-neutral-200 bg-white p-6">
-        <Link className="text-sm font-semibold text-neutral-500" href={`/posts/${post.id}`}>
+      <section className="mx-auto max-w-3xl rounded-lg border border-line bg-surface p-6">
+        <Link className="text-sm font-semibold text-faint" href={`/posts/${post.id}`}>
           글로 돌아가기
         </Link>
         <h1 className="mt-3 text-2xl font-semibold">공유글 수정</h1>
-        <p className="mt-2 text-sm leading-6 text-neutral-600">
+        <p className="mt-2 text-sm leading-6 text-muted">
           모임 전에 공유할 진행 내용, 자료 링크, 피드백 질문을 수정합니다.
         </p>
 
@@ -89,6 +90,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
             post={{
               body_markdown: post.body_markdown,
               feedback_question: post.feedback_question,
+              group_id: post.group_id,
               id: post.id,
               attachments,
               links: post.post_links.map((link) => link.url),

@@ -165,7 +165,7 @@ export function ClientHomeModals({
             week={selectedWeek}
           />
         ) : (
-          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="rounded-md border border-berry-border bg-berry-tint px-3 py-2 text-sm text-berry">
             그룹장만 모임 정보를 수정할 수 있습니다.
           </p>
         )}
@@ -211,19 +211,19 @@ export function ClientHomeModals({
                 src={currentUser.avatarUrl}
               />
             ) : (
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-900 text-lg font-semibold text-white">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-lg font-semibold text-inverse">
                 {displayName.trim().slice(0, 1).toUpperCase() || "?"}
               </span>
             )}
             <div className="min-w-0">
-              <p className="truncate font-semibold text-neutral-900">{displayName}</p>
-              <p className="truncate text-sm text-neutral-500">
+              <p className="truncate font-semibold text-ink">{displayName}</p>
+              <p className="truncate text-sm text-faint">
                 {currentUser.email ?? "이메일 정보 없음"}
               </p>
             </div>
           </div>
           <a
-            className="block rounded-md border border-neutral-200 px-3 py-2 text-center text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+            className="block rounded-md border border-line px-3 py-2 text-center text-sm font-semibold text-ink hover:bg-line-soft"
             href="/logout"
           >
             로그아웃

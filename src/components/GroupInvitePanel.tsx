@@ -40,12 +40,12 @@ export function GroupInvitePanel({ groupName, inviteCode, inviteUrl }: GroupInvi
 
   return (
     <div className="space-y-5">
-      <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
-        <p className="text-sm font-semibold text-neutral-500">초대 코드</p>
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-md border border-neutral-200 bg-white px-3 py-2">
-          <code className="font-mono text-sm font-semibold text-neutral-900">{inviteCode}</code>
+      <div className="rounded-lg border border-line bg-line-soft p-4">
+        <p className="text-sm font-semibold text-faint">초대 코드</p>
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-md border border-line bg-surface px-3 py-2">
+          <code className="font-mono text-sm font-semibold text-ink">{inviteCode}</code>
           <button
-            className="inline-flex items-center gap-1 rounded-md border border-neutral-200 px-2 py-1 text-xs font-semibold text-neutral-700 hover:border-neutral-400"
+            className="inline-flex items-center gap-1 rounded-md border border-line px-2 py-1 text-xs font-semibold text-ink hover:border-line-strong"
             onClick={() => copy(inviteCode, "code")}
             type="button"
           >
@@ -53,14 +53,14 @@ export function GroupInvitePanel({ groupName, inviteCode, inviteUrl }: GroupInvi
             {copied === "code" ? "복사됨" : "복사"}
           </button>
         </div>
-        <p className="mt-2 text-xs leading-5 text-neutral-500">
+        <p className="mt-2 text-xs leading-5 text-faint">
           초대받은 사람은 로그인 후 이 코드를 입력하면 그룹에 참여할 수 있습니다.
         </p>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2">
         <button
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-neutral-900 px-4 py-3 text-sm font-semibold text-white"
+          className="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-3 text-sm font-semibold text-inverse"
           onClick={share}
           type="button"
         >
@@ -68,21 +68,21 @@ export function GroupInvitePanel({ groupName, inviteCode, inviteUrl }: GroupInvi
           카카오톡/메신저 공유
         </button>
         <a
-          className="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-3 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
+          className="inline-flex items-center justify-center gap-2 rounded-md border border-line-strong bg-surface px-4 py-3 text-sm font-semibold text-ink hover:border-ink"
           href={mailHref}
         >
           <Mail size={16} />
           메일로 보내기
         </a>
         <a
-          className="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-3 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
+          className="inline-flex items-center justify-center gap-2 rounded-md border border-line-strong bg-surface px-4 py-3 text-sm font-semibold text-ink hover:border-ink"
           href={smsHref}
         >
           <MessageCircle size={16} />
           문자/메신저
         </a>
         <button
-          className="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-3 text-sm font-semibold text-neutral-700 hover:border-neutral-900"
+          className="inline-flex items-center justify-center gap-2 rounded-md border border-line-strong bg-surface px-4 py-3 text-sm font-semibold text-ink hover:border-ink"
           onClick={() => copy(inviteMessage, "message")}
           type="button"
         >
@@ -91,7 +91,7 @@ export function GroupInvitePanel({ groupName, inviteCode, inviteUrl }: GroupInvi
         </button>
       </div>
 
-      <div className="rounded-md border border-neutral-200 bg-white p-3 text-sm leading-6 text-neutral-600">
+      <div className="rounded-md border border-line bg-surface p-3 text-sm leading-6 text-muted">
         {inviteMessage.split("\n").map((line) => (
           <p key={line}>{line}</p>
         ))}

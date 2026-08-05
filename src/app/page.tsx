@@ -60,16 +60,16 @@ export default async function Home({ searchParams }: HomeProps) {
 
       <div className="mx-auto max-w-6xl px-4 py-6 lg:px-8">
           <div className="space-y-6">
-            <section className="rounded-lg border border-neutral-200 bg-white p-6">
+            <section className="rounded-lg border border-line bg-surface p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-neutral-500">
+                  <p className="text-sm font-semibold text-faint">
                     {homeData.user ? "내 스터디" : "서비스 준비"}
                   </p>
                   <h1 className="mt-2 text-3xl font-semibold tracking-normal">
                     {homeData.user ? "스터디 목록" : "쉬었음청년 스터디"}
                   </h1>
-                  <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-600">
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
                     참여 중인 스터디를 선택하면 모임 일정과 주차별 기록을 볼 수 있습니다.
                   </p>
                 </div>
@@ -77,7 +77,7 @@ export default async function Home({ searchParams }: HomeProps) {
             </section>
 
             {!homeData.configured ? (
-              <section className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
+              <section className="rounded-lg border border-sun-border bg-sun-tint p-5 text-sm leading-6 text-sun">
                 <p className="font-semibold">Supabase 연결 정보가 필요합니다.</p>
                 <p className="mt-1">
                   `.env.local`에 Supabase URL과 publishable key를 설정하면 로그인과 그룹 기능을 사용할 수
@@ -87,26 +87,26 @@ export default async function Home({ searchParams }: HomeProps) {
             ) : null}
 
             {homeData.error ? (
-              <section className="rounded-lg border border-red-200 bg-red-50 p-5 text-sm leading-6 text-red-700">
+              <section className="rounded-lg border border-berry-border bg-berry-tint p-5 text-sm leading-6 text-berry">
                 {homeData.error}
               </section>
             ) : null}
 
             {homeData.user && homeData.groups.length === 0 ? (
-              <section className="rounded-lg border border-neutral-200 bg-white p-5">
+              <section className="rounded-lg border border-line bg-surface p-5">
                 <h2 className="text-xl font-semibold">아직 참여한 그룹이 없습니다</h2>
-                <p className="mt-2 text-sm leading-6 text-neutral-600">
+                <p className="mt-2 text-sm leading-6 text-muted">
                   새 스터디 그룹을 만들거나 받은 초대 코드로 기존 그룹에 참여하세요.
                 </p>
                 <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                   <ModalTrigger
-                    className="rounded-md bg-neutral-900 px-4 py-2 text-center text-sm font-semibold text-white"
+                    className="rounded-md bg-accent px-4 py-2 text-center text-sm font-semibold text-inverse"
                     modal="new-group"
                   >
                     그룹 만들기
                   </ModalTrigger>
                   <ModalTrigger
-                    className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-center text-sm font-semibold text-neutral-700"
+                    className="rounded-md border border-line-strong bg-surface px-4 py-2 text-center text-sm font-semibold text-ink"
                     modal="join-group"
                   >
                     초대 코드 참여

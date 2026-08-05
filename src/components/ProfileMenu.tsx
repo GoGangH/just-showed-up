@@ -20,7 +20,7 @@ export function ProfileMenu({ avatarUrl, displayName }: ProfileMenuProps) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="group flex cursor-pointer list-none items-center gap-2 rounded-md border border-neutral-200 bg-white px-2 py-1.5 hover:border-neutral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900">
+      <DropdownMenuTrigger className="group flex cursor-pointer list-none items-center gap-2 rounded-md border border-line bg-surface px-2 py-1.5 hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
         {avatarUrl ? (
           <img
             alt=""
@@ -29,14 +29,14 @@ export function ProfileMenu({ avatarUrl, displayName }: ProfileMenuProps) {
             src={avatarUrl}
           />
         ) : (
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-xs font-semibold text-inverse">
             {initial}
           </span>
         )}
-        <span className="hidden max-w-28 truncate text-sm font-semibold text-neutral-800 sm:inline">
+        <span className="hidden max-w-28 truncate text-sm font-semibold text-ink sm:inline">
           {displayName}
         </span>
-        <ChevronDown className="text-neutral-500 transition group-data-[state=open]:rotate-180" size={16} />
+        <ChevronDown className="text-faint transition group-data-[state=open]:rotate-180" size={16} />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-44">

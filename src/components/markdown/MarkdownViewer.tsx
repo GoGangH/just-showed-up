@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 
 export function MarkdownViewer({ content }: { content: string }) {
   return (
-    <div className="space-y-4 text-sm leading-7 text-neutral-800">
+    <div className="space-y-4 text-sm leading-7 text-ink">
       <ReactMarkdown
         rehypePlugins={[rehypeSanitize]}
         remarkPlugins={[remarkGfm]}
@@ -15,19 +15,19 @@ export function MarkdownViewer({ content }: { content: string }) {
           ul: ({ children }) => <ul className="list-disc space-y-1 pl-5">{children}</ul>,
           ol: ({ children }) => <ol className="list-decimal space-y-1 pl-5">{children}</ol>,
           a: ({ children, href }) => (
-            <a className="font-medium text-neutral-900 underline underline-offset-4" href={href}>
+            <a className="font-medium text-ink underline underline-offset-4" href={href}>
               {children}
             </a>
           ),
           img: ({ alt, src }) => (
             <img
               alt={alt ?? ""}
-              className="max-h-[520px] w-full rounded-lg border border-neutral-200 object-contain"
+              className="max-h-[520px] w-full rounded-lg border border-line object-contain"
               src={src ?? ""}
             />
           ),
           code: ({ children }) => (
-            <code className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[0.92em]">
+            <code className="rounded bg-line px-1.5 py-0.5 font-mono text-[0.92em]">
               {children}
             </code>
           ),
@@ -35,7 +35,7 @@ export function MarkdownViewer({ content }: { content: string }) {
             <pre className="overflow-x-auto rounded-md bg-neutral-950 p-4 text-neutral-50">{children}</pre>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-neutral-300 pl-4 text-neutral-600">
+            <blockquote className="border-l-4 border-line-strong pl-4 text-muted">
               {children}
             </blockquote>
           ),

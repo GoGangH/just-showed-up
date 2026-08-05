@@ -193,9 +193,9 @@ export function RescheduleForm({
       ))}
 
       <label className="block">
-        <span className="text-sm font-medium text-neutral-700">재조율 사유</span>
+        <span className="text-sm font-medium text-ink">재조율 사유</span>
         <input
-          className="mt-1 w-full rounded-md border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-900"
+          className="mt-1 w-full rounded-md border border-line-strong bg-surface px-4 py-3 outline-none focus:border-ink"
           name="reason"
           placeholder="예: 이번 주 기본 시간 참석이 어렵습니다."
         />
@@ -204,31 +204,31 @@ export function RescheduleForm({
       <div>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-neutral-700">가능한 시간 선택</p>
-            <p className="mt-1 text-xs text-neutral-500">
+            <p className="text-sm font-medium text-ink">가능한 시간 선택</p>
+            <p className="mt-1 text-xs text-faint">
               다른 사람이 선택한 시간은 미리 칠해져 있고, 그 위에 내 가능 시간을 칠하면 인원수만큼 색이 진해집니다.
             </p>
           </div>
-          <p className="text-sm font-semibold text-neutral-700">{selected.size}개 선택</p>
+          <p className="text-sm font-semibold text-ink">{selected.size}개 선택</p>
         </div>
 
-        <div className="mt-3 max-h-[430px] overflow-auto rounded-md border border-neutral-200">
+        <div className="mt-3 max-h-[430px] overflow-auto rounded-md border border-line">
           <div
             className="grid min-w-[420px] select-none"
             style={{
               gridTemplateColumns: `44px repeat(${days.length}, minmax(58px, 1fr))`,
             }}
           >
-            <div className="border-b border-r border-neutral-200 bg-neutral-50 p-2 text-xs font-semibold text-neutral-500">
+            <div className="border-b border-r border-line bg-line-soft p-2 text-xs font-semibold text-faint">
               시간
             </div>
             {days.map((day) => (
               <div
-                className="border-b border-r border-neutral-200 bg-neutral-50 p-2 text-center text-xs font-semibold text-neutral-700 last:border-r-0"
+                className="border-b border-r border-line bg-line-soft p-2 text-center text-xs font-semibold text-ink last:border-r-0"
                 key={day.toISOString()}
               >
                 <span className="block">{weekdayLabels[day.getDay()]}</span>
-                <span className="text-neutral-500">
+                <span className="text-faint">
                   {day.getMonth() + 1}/{day.getDate()}
                 </span>
               </div>
@@ -237,7 +237,7 @@ export function RescheduleForm({
             {timeSlots.map(({ hour, minute }, slotIndex) => (
               <div className="contents" key={`${hour}:${minute}`}>
                 {minute === 0 ? (
-                  <div className="row-span-2 flex items-center border-r border-t border-neutral-200 bg-neutral-50 px-2 text-xs font-semibold text-neutral-500">
+                  <div className="row-span-2 flex items-center border-r border-t border-line bg-line-soft px-2 text-xs font-semibold text-faint">
                     {formatHourLabel(hour, minute)}
                   </div>
                 ) : null}
@@ -255,7 +255,7 @@ export function RescheduleForm({
                       aria-pressed={isSelected}
                       aria-label={`${day.getMonth() + 1}/${day.getDate()} ${timeLabel}, ${visibleCount}명 가능`}
                       className={`h-4 border-r border-t transition last:border-r-0 ${
-                        visibleCount > 0 ? "hover:brightness-95" : "bg-white hover:bg-teal-50"
+                        visibleCount > 0 ? "hover:brightness-95" : "bg-surface hover:bg-teal-50"
                       }`}
                       key={value}
                       onPointerDown={(event) => {
@@ -281,8 +281,8 @@ export function RescheduleForm({
           </div>
         </div>
 
-        <div className="mt-3 rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">
-          <p className="font-semibold text-neutral-700">색상 기준</p>
+        <div className="mt-3 rounded-md bg-line-soft p-3 text-xs text-muted">
+          <p className="font-semibold text-ink">색상 기준</p>
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
             {Array.from({ length: maxVisibleCount }, (_, index) => {
               const count = index + 1;
@@ -302,14 +302,14 @@ export function RescheduleForm({
       </div>
 
       {state.error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-md border border-berry-border bg-berry-tint px-3 py-2 text-sm text-berry">
           {state.error}
         </p>
       ) : null}
 
       <div className="flex justify-end">
         <button
-          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-neutral-400"
+          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-inverse disabled:cursor-not-allowed disabled:bg-disabled"
           disabled={pending}
           type="submit"
         >

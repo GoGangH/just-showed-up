@@ -32,7 +32,7 @@ export function LoginForm({ nextPath = "/" }: { nextPath?: string }) {
       <input name="next" type="hidden" value={nextPath} />
       {providers.map((provider) => (
         <button
-          className="flex w-full items-center justify-center gap-3 rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm font-semibold text-neutral-800 hover:border-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-3 rounded-md border border-line-strong bg-surface px-3 py-2.5 text-sm font-semibold text-ink hover:border-ink disabled:cursor-not-allowed disabled:opacity-60"
           disabled={pending}
           key={provider.id}
           name="provider"
@@ -40,7 +40,7 @@ export function LoginForm({ nextPath = "/" }: { nextPath?: string }) {
           value={provider.id}
         >
           {provider.icon ? (
-            <span className="flex size-5 items-center justify-center rounded-full border border-neutral-300 text-xs">
+            <span className="flex size-5 items-center justify-center rounded-full border border-line-strong text-xs">
               {provider.icon}
             </span>
           ) : (
@@ -51,12 +51,12 @@ export function LoginForm({ nextPath = "/" }: { nextPath?: string }) {
       ))}
 
       {state.error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-md border border-berry-border bg-berry-tint px-3 py-2 text-sm text-berry">
           {state.error}
         </p>
       ) : null}
 
-      <p className="text-xs leading-5 text-neutral-500">
+      <p className="text-xs leading-5 text-faint">
         선택한 OAuth provider가 Supabase에서 활성화되어 있어야 로그인할 수 있습니다.
       </p>
     </form>

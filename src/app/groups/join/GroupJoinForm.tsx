@@ -11,9 +11,9 @@ export function GroupJoinForm({ defaultInviteCode = "" }: { defaultInviteCode?: 
   return (
     <form action={formAction} className="space-y-4">
       <label className="block">
-        <span className="text-sm font-medium text-neutral-700">초대 코드</span>
+        <span className="text-sm font-medium text-ink">초대 코드</span>
         <input
-          className="mt-1 w-full rounded-md border border-neutral-300 bg-white px-4 py-3 font-mono outline-none focus:border-neutral-900"
+          className="mt-1 w-full rounded-md border border-line-strong bg-surface px-4 py-3 font-mono outline-none focus:border-ink"
           defaultValue={defaultInviteCode}
           name="invite_code"
           placeholder="초대 코드를 입력하세요"
@@ -21,13 +21,13 @@ export function GroupJoinForm({ defaultInviteCode = "" }: { defaultInviteCode?: 
       </label>
 
       {state.error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-md border border-berry-border bg-berry-tint px-3 py-2 text-sm text-berry">
           {state.error}
         </p>
       ) : null}
 
       <button
-        className="w-full rounded-md bg-neutral-900 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-neutral-400"
+        className="w-full rounded-md bg-accent px-4 py-3 text-sm font-semibold text-inverse disabled:cursor-not-allowed disabled:bg-disabled"
         disabled={pending}
         type="submit"
       >
