@@ -22,12 +22,7 @@ export function getConfiguredSiteOrigin() {
     : `https://${siteUrl}`;
 }
 
-export function getRequestOrigin(headersList: Pick<Headers, "get">) {
-  const configuredSiteUrl = getConfiguredSiteOrigin();
-  if (configuredSiteUrl) {
-    return configuredSiteUrl;
-  }
-
+export function getActualRequestOrigin(headersList: Pick<Headers, "get">) {
   const forwardedHost = headersList.get("x-forwarded-host");
   const host = forwardedHost ?? headersList.get("host") ?? "127.0.0.1:3000";
   const forwardedProto = headersList.get("x-forwarded-proto");
@@ -35,4 +30,13 @@ export function getRequestOrigin(headersList: Pick<Headers, "get">) {
     forwardedProto ?? (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
 
   return `${protocol}://${host}`;
+}
+
+export function getRequestOrigin(headersList: Pick<Headers, "get">) {
+  const configuredSiteUrl = getConfiguredSiteOrigin();
+  if (configuredSiteUrl) {
+    return configuredSiteUrl;
+  }
+
+  return getActualRequestOrigin(headersList);
 }

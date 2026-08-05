@@ -3,11 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { syncProfileFromUser } from "@/lib/profiles";
 import { getSafeRedirectPath } from "@/lib/redirects";
-import { getConfiguredSiteOrigin } from "@/lib/site-url";
 
+// The session cookie Supabase just set is scoped to whatever host received this
+// request, so every redirect from here must stay on requestUrl.origin — sending
+// the browser to a different (even if "configured canonical") origin would leave
+// it looking logged out there.
 function redirectWithError(requestUrl: URL, message: string) {
-  const redirectOrigin = getConfiguredSiteOrigin() ?? requestUrl.origin;
-  const target = new URL("/login", redirectOrigin);
+  const target = new URL("/login", requestUrl.origin);
   target.searchParams.set("error", message);
   const next = requestUrl.searchParams.get("next");
   if (next) target.searchParams.set("next", next);
@@ -52,6 +54,7 @@ export async function GET(request: Request) {
 
   await syncProfileFromUser(supabase, user);
 
-  const redirectOrigin = getConfiguredSiteOrigin() ?? requestUrl.origin;
-  return NextResponse.redirect(new URL(getSafeRedirectPath(requestUrl.searchParams.get("next")), redirectOrigin));
+  return NextResponse.redirect(
+    new URL(getSafeRedirectPath(requestUrl.searchParams.get("next")), requestUrl.origin),
+  );
 }
