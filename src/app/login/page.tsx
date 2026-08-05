@@ -5,12 +5,13 @@ import { getSafeRedirectPath } from "@/lib/redirects";
 
 type LoginPageProps = {
   searchParams: Promise<{
+    error?: string;
     next?: string;
   }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { next } = await searchParams;
+  const { error, next } = await searchParams;
   const configured = hasSupabaseConfig();
   const nextPath = getSafeRedirectPath(next);
 
@@ -32,6 +33,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               `.env.local`에 `NEXT_PUBLIC_SUPABASE_URL`과 `NEXT_PUBLIC_SUPABASE_ANON_KEY`를
               설정하면 로그인 기능을 사용할 수 있습니다.
             </p>
+          </div>
+        ) : null}
+
+        {error ? (
+          <div className="mt-6 rounded-md border border-berry-border bg-berry-tint p-4 text-sm leading-6 text-berry">
+            {error}
           </div>
         ) : null}
 
