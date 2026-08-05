@@ -36,7 +36,7 @@ Supabase 프로젝트를 만든 뒤 `.env.local`에 값을 채우고 `supabase/m
 `VERCEL_PROJECT_PRODUCTION_URL` 또는 `VERCEL_URL`을 fallback으로 사용합니다.
 
 ```text
-NEXT_PUBLIC_SITE_URL=https://just-showed-up.vercel.app
+NEXT_PUBLIC_SITE_URL=https://jsu.g0o0.com
 ```
 
 자주 쓰는 검증 명령입니다.
@@ -68,7 +68,7 @@ Authentication URL 설정에 로컬/프로덕션 콜백 URL을 추가합니다.
 ```text
 http://127.0.0.1:3000/auth/callback
 http://localhost:3000/auth/callback
-https://just-showed-up.vercel.app/auth/callback
+https://jsu.g0o0.com/auth/callback
 ```
 
 Authentication > Providers에서 사용할 OAuth provider를 활성화합니다.

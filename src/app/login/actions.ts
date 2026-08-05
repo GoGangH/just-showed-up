@@ -14,6 +14,12 @@ export type AuthFormState = {
 
 const oauthProviders = ["kakao", "google", "github"] as const satisfies readonly Provider[];
 
+// Kakao's account_email scope requires business-app verification; ask for the
+// profile only so login doesn't fail or prompt for email consent.
+const providerScopes: Partial<Record<(typeof oauthProviders)[number], string>> = {
+  kakao: "profile_nickname",
+};
+
 export async function oauthSignInAction(
   _: AuthFormState,
   formData: FormData,
@@ -36,6 +42,7 @@ export async function oauthSignInAction(
     provider: provider as Provider,
     options: {
       redirectTo: callbackUrl.toString(),
+      scopes: providerScopes[provider as (typeof oauthProviders)[number]],
     },
   });
 
