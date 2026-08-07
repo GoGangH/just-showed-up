@@ -29,8 +29,10 @@ export function AppHeader({
     : "empty";
 
   return (
-    <header className="sticky top-0 z-10 border-b border-line bg-surface/95 px-4 py-3 backdrop-blur">
-      {isSignedIn ? <NotificationCacheRefresh initialSignature={notificationSignature} /> : null}
+    <header className="sticky top-0 z-30 border-b border-line bg-surface/95 px-4 py-3 backdrop-blur">
+      {isSignedIn ? (
+        <NotificationCacheRefresh initialSignature={notificationSignature} />
+      ) : null}
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
         <PrefetchRouteLink href="/" prefetchOnMount>
           <div className="flex items-center gap-2.5">
@@ -56,9 +58,15 @@ export function AppHeader({
               >
                 초대 참여
               </ModalTrigger>
-              <NotificationBell notifications={notifications} unreadCount={unreadCount} />
+              <NotificationBell
+                notifications={notifications}
+                unreadCount={unreadCount}
+              />
               <ThemeToggle />
-              <ProfileMenu avatarUrl={avatarUrl ?? null} displayName={displayName} />
+              <ProfileMenu
+                avatarUrl={avatarUrl ?? null}
+                displayName={displayName}
+              />
             </>
           ) : (
             <>
