@@ -29,7 +29,7 @@ export function AppHeader({
     : "empty";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface/95 px-4 py-3 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-line bg-surface/95 px-4 py-3 backdrop-blur">
       {isSignedIn ? (
         <NotificationCacheRefresh initialSignature={notificationSignature} />
       ) : null}
