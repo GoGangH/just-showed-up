@@ -19,6 +19,7 @@ import {
 } from "@/lib/dates/kst";
 import { ModalTrigger } from "@/components/ModalTrigger";
 import { PrefetchRouteLink } from "@/components/PrefetchRouteLink";
+import { getPostExcerpt } from "@/lib/markdown/excerpt";
 import { RemainingTime } from "./RemainingTime";
 
 const weekdays = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
@@ -102,15 +103,6 @@ function formatSlotLabel(value: string) {
   });
 }
 
-function getExcerpt(markdown: string) {
-  return markdown
-    .replace(/[#>*_`-]/g, "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .join(" ")
-    .slice(0, 120);
-}
 
 function getInitial(name: string) {
   return name.trim().slice(0, 1).toUpperCase() || "?";
@@ -505,7 +497,7 @@ export function GroupWorkspace({
                   <div className="pointer-events-none relative z-20 mt-4 border-t border-line-soft pt-4">
                     <p className="text-lg font-semibold">{post.title}</p>
                     <p className="mt-2 text-sm leading-6 text-muted">
-                      {getExcerpt(post.body_markdown)}
+                      {getPostExcerpt(post.body_markdown, 120)}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-faint">
                       <span>익명 댓글 {post.anonymous_comments.length}</span>

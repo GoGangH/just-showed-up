@@ -1,16 +1,7 @@
 import { MessageCircle, Paperclip, Sparkles } from "lucide-react";
 import type { HomePost } from "@/app/home-data";
+import { getPostExcerpt } from "@/lib/markdown/excerpt";
 import Link from "next/link";
-
-function getExcerpt(markdown: string) {
-  return markdown
-    .replace(/[#>*_`-]/g, "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .join(" ")
-    .slice(0, 160);
-}
 
 function formatWeekLabel(weekStart: string) {
   const date = new Date(`${weekStart}T00:00:00`);
@@ -74,7 +65,9 @@ export function FeedPreview({ posts }: { posts: HomePost[] }) {
                   {formatWeekLabel(post.week_start)}
                 </span>
               </div>
-              <p className="mt-3 text-sm leading-6 text-ink">{getExcerpt(post.body_markdown)}</p>
+              <p className="mt-3 text-sm leading-6 text-ink">
+                {getPostExcerpt(post.body_markdown, 160)}
+              </p>
               {post.post_links.length > 0 ? (
                 <div className="mt-4 rounded-md border border-line bg-line-soft p-3 text-sm">
                   <p className="inline-flex items-center gap-2 font-semibold">

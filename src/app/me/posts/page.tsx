@@ -1,6 +1,7 @@
 import { AppHeader } from "@/components/AppHeader";
 import { PrefetchRouteLink } from "@/components/PrefetchRouteLink";
 import { getHeaderNotifications } from "@/lib/notifications";
+import { getPostExcerpt } from "@/lib/markdown/excerpt";
 import { buildLoginHref } from "@/lib/redirects";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -24,16 +25,6 @@ function formatWeek(value: string) {
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return value;
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 주`;
-}
-
-function getExcerpt(markdown: string) {
-  return markdown
-    .replace(/[#>*_`-]/g, "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .join(" ")
-    .slice(0, 140);
 }
 
 export default async function MyPostsPage() {
@@ -127,7 +118,7 @@ export default async function MyPostsPage() {
                   </p>
                 </div>
                 <p className="mt-3 text-sm leading-6 text-muted">
-                  {getExcerpt(post.body_markdown)}
+                  {getPostExcerpt(post.body_markdown, 140)}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-faint">
                   <span>익명 댓글 {post.anonymous_comments.length}</span>
