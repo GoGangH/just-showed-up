@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { MarkdownViewer } from "@/components/markdown/MarkdownViewer";
 import type { Database } from "@/lib/supabase/database.types";
+import { resolveAttachmentMarkdown } from "../resolve-attachment-markdown";
 import { CommentForm } from "./CommentForm";
 import { ReactionBar } from "./ReactionBar";
 
@@ -123,15 +124,12 @@ export default async function PostDetailPage({ params, searchParams }: PageProps
     pdfAttachments.some((pdf) => pdf.id === attachment.id),
   );
   const inlineAttachmentIds = getInlineAttachmentIds(post.body_markdown);
-  const signedImageById = new Map(
+  const signedImageById = Object.fromEntries(
     signedImages
       .filter((image) => image.signedUrl)
       .map((image) => [image.id, image.signedUrl as string]),
   );
-  const bodyMarkdown = post.body_markdown.replace(
-    /attachment:([0-9a-f-]{36})/gi,
-    (match, attachmentId: string) => signedImageById.get(attachmentId) ?? match,
-  );
+  const bodyMarkdown = resolveAttachmentMarkdown(post.body_markdown, signedImageById);
   const unattachedImages = signedImages.filter((image) => !inlineAttachmentIds.has(image.id));
 
   return (

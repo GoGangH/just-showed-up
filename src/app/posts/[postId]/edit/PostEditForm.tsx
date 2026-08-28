@@ -43,6 +43,7 @@ export function PostEditForm({ post }: PostEditFormProps) {
   const [state, formAction, pending] = useActionState(updateWeeklyPostAction, initialState);
   const [links, setLinks] = useState(post.links.length > 0 ? post.links : [""]);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [attachmentUrls, setAttachmentUrls] = useState<Record<string, string>>({});
   const [savedDraft, setSavedDraft] = useState<StoredPostDraft | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -149,7 +150,11 @@ export function PostEditForm({ post }: PostEditFormProps) {
         />
       </label>
 
-      <PostBodyEditor defaultValue={post.body_markdown} textareaRef={textareaRef} />
+      <PostBodyEditor
+        attachmentUrls={attachmentUrls}
+        defaultValue={post.body_markdown}
+        textareaRef={textareaRef}
+      />
 
       <label className="block">
         <span className="text-sm font-medium text-ink">피드백 받고 싶은 질문</span>
@@ -188,6 +193,7 @@ export function PostEditForm({ post }: PostEditFormProps) {
       <PostAttachmentInput
         existingAttachments={post.attachments}
         groupId={post.group_id}
+        onAttachmentUrlsChange={setAttachmentUrls}
         onUploadingChange={setIsUploadingAttachment}
         textareaRef={textareaRef}
       />

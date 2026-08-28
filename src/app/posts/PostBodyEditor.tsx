@@ -2,11 +2,14 @@
 
 import { useState, type RefObject } from "react";
 import { MarkdownViewer } from "@/components/markdown/MarkdownViewer";
+import { resolveAttachmentMarkdown } from "./resolve-attachment-markdown";
 
 export function PostBodyEditor({
+  attachmentUrls = {},
   defaultValue = "",
   textareaRef,
 }: {
+  attachmentUrls?: Record<string, string>;
   defaultValue?: string;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
 }) {
@@ -52,7 +55,7 @@ export function PostBodyEditor({
       {mode === "preview" ? (
         <div className="mt-1 min-h-72 rounded-md border border-line bg-surface px-4 py-3">
           {value.trim() ? (
-            <MarkdownViewer content={value} />
+            <MarkdownViewer content={resolveAttachmentMarkdown(value, attachmentUrls)} />
           ) : (
             <p className="text-sm text-faint">미리보기할 본문이 없습니다.</p>
           )}

@@ -58,11 +58,13 @@ function getMarkdownImage(name: string, token: string) {
 export function PostAttachmentInput({
   existingAttachments = [],
   groupId,
+  onAttachmentUrlsChange,
   onUploadingChange,
   textareaRef,
 }: {
   existingAttachments?: ExistingAttachment[];
   groupId: string;
+  onAttachmentUrlsChange?: (urls: Record<string, string>) => void;
   onUploadingChange?: (isUploading: boolean) => void;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
 }) {
@@ -89,6 +91,20 @@ export function PostAttachmentInput({
     const isUploading = selectedAttachments.some((attachment) => attachment.status === "uploading");
     onUploadingChange?.(isUploading);
   }, [selectedAttachments, onUploadingChange]);
+
+  useEffect(() => {
+    const urls: Record<string, string> = {};
+    for (const attachment of existingAttachments) {
+      if (isImageType(attachment.file_type) && attachment.signedUrl) {
+        urls[attachment.id] = attachment.signedUrl;
+      }
+    }
+    for (const attachment of selectedAttachments) {
+      if (attachment.previewUrl) urls[attachment.token] = attachment.previewUrl;
+    }
+    onAttachmentUrlsChange?.(urls);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingAttachments, selectedAttachments]);
 
   const insertImage = (name: string, token: string) => {
     if (!textareaRef.current) return;

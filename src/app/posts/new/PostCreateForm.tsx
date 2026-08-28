@@ -24,6 +24,7 @@ export function PostCreateForm({ groupId, weekStart }: PostCreateFormProps) {
   const [state, formAction, pending] = useActionState(createWeeklyPostAction, initialState);
   const [links, setLinks] = useState([""]);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [attachmentUrls, setAttachmentUrls] = useState<Record<string, string>>({});
   const [savedDraft, setSavedDraft] = useState<StoredPostDraft | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -126,7 +127,7 @@ export function PostCreateForm({ groupId, weekStart }: PostCreateFormProps) {
         />
       </label>
 
-      <PostBodyEditor textareaRef={textareaRef} />
+      <PostBodyEditor attachmentUrls={attachmentUrls} textareaRef={textareaRef} />
 
       <label className="block">
         <span className="text-sm font-medium text-ink">피드백 받고 싶은 질문</span>
@@ -163,6 +164,7 @@ export function PostCreateForm({ groupId, weekStart }: PostCreateFormProps) {
 
       <PostAttachmentInput
         groupId={groupId}
+        onAttachmentUrlsChange={setAttachmentUrls}
         onUploadingChange={setIsUploadingAttachment}
         textareaRef={textareaRef}
       />
